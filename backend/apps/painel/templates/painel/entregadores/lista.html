@@ -1,0 +1,193 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Entregadores{% endblock %}
+{% block heading %}Entregadores{% endblock %}
+{% block actions %}
+  <a class="btn btn-sm btn-primary" href="{% url 'painel:mapa' %}">Mapa ao vivo</a>
+  {% include "painel/entregadores/_periodo.html" %}
+{% endblock %}
+{% block content %}
+  <section class="kpis" aria-label="Entregas de {{ periodo_label|lower }}">
+    <div class="kpi is-gold">
+      <div class="kpi-label">Taxas dos entregadores</div>
+      <div class="kpi-value">{{ total_taxas|brl }}</div>
+      <div class="kpi-note">soma das taxas de entrega · {{ periodo_label|lower }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Entregas feitas</div>
+      <div class="kpi-value">{{ qtd_entregas }}</div>
+      <div class="kpi-note">pedidos entregues · {{ periodo_label|lower }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Na rua agora</div>
+      <div class="kpi-value">{{ qtd_em_rota }}</div>
+      <div class="kpi-note">pedido{{ qtd_em_rota|pluralize }} saíram e ainda não foram concluídos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Trabalhando hoje</div>
+      <div class="kpi-value">{{ qtd_trabalhando }}</div>
+      <div class="kpi-note">de {{ linhas|length }} cadastrado{{ linhas|length|pluralize }}</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Quadro do dia · {{ periodo_label|lower }}</h2>
+      <span class="muted small"><strong>pg</strong> = já pago no PIX · valor = o entregador cobra na entrega · <strong>ok</strong> = entregue</span>
+    </div>
+    {% if planilha %}
+      <div class="sheet-wrap">
+        <div class="sheet">
+          {% for col in planilha %}
+            <div class="sheet-col">
+              <a class="sheet-head" href="{% url 'painel:entregador' col.entregador.pk %}{% query_com %}">{{ col.entregador.name }}{% if not col.trabalhando %} <span class="muted small">(fora hoje)</span>{% endif %}</a>
+              <div class="sheet-row sheet-labels"><span>pedido</span><span>valor</span><span></span></div>
+              {% for p in col.pedidos %}
+                <a class="sheet-row" href="{% url 'painel:pedido' p.pk %}" title="#{{ p.readable_code }} · {{ p.customer_name }} · {{ p.delivery_neighborhood }}">
+                  <span class="num">{{ p.readable_code|slice:"-3:" }}</span>
+                  {% if p.pago %}<span>pg</span>{% else %}<span class="num sheet-collect" title="{{ p.get_payment_method_display }}{% if p.needs_change and p.change_for %} · troco p/ {{ p.change_for|brl }}{% endif %}">{{ p.total_amount|brl }}</span>{% endif %}
+                  {% if p.status == 'CONCLUIDO' %}<span class="sheet-ok">ok</span>{% else %}<span class="tag tag-warn">na rua</span>{% endif %}
+                </a>
+              {% empty %}
+                <p class="column-empty">Nenhuma entrega ainda.</p>
+              {% endfor %}
+              <div class="sheet-foot">
+                <span>{{ col.qtd }} entregue{{ col.qtd|pluralize }}{% if col.em_rota %} · {{ col.em_rota }} na rua{% endif %}</span>
+                {% if col.a_cobrar %}<span>A prestar contas: <strong class="num">{{ col.a_cobrar|brl }}</strong></span>{% endif %}
+                <span>Taxas: <strong class="num">{{ col.taxas|brl }}</strong></span>
+                {% if col.vales %}<span>Vales: <strong class="num">{{ col.vales|brl }}</strong></span>{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="empty"><strong>Ninguém trabalhando hoje</strong>Ligue o botão "Fora hoje" de quem veio trabalhar, ou cadastre a equipe abaixo.</div>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Por entregador · {{ periodo_label|lower }}</h2>
+      <span class="muted small">O entregador recebe a taxa de entrega de cada pedido que entregou.</span>
+    </div>
+    {% if linhas %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Entregador</th><th>Hoje</th><th class="right">Na rua</th><th class="right">Entregas</th><th class="right">Taxas</th><th class="right hide-mobile">Vales</th></tr></thead>
+          <tbody>
+            {% for l in linhas %}
+              <tr {% if not l.trabalhando and not l.qtd %}class="is-off"{% endif %}>
+                <td>
+                  <a class="row-link" href="{% url 'painel:entregador' l.entregador.pk %}{% query_com %}">{{ l.entregador.name }}</a>
+                  {% if l.entregador.phone %}<br><span class="muted small">{{ l.entregador.phone|telefone }}</span>{% endif %}
+                </td>
+                <td>
+                  <form class="switch-form" method="post" action="{% url 'painel:entregador_trabalhando' l.entregador.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="switch {% if l.trabalhando %}is-on{% endif %}" aria-pressed="{{ l.trabalhando|yesno:'true,false' }}">{% if l.trabalhando %}Trabalhando{% else %}Fora hoje{% endif %}</button>
+                  </form>
+                </td>
+                <td class="right num">{{ l.em_rota|default:"—" }}</td>
+                <td class="right num">{{ l.qtd }}</td>
+                <td class="right num"><strong>{{ l.taxas|brl }}</strong></td>
+                <td class="right num hide-mobile">{% if l.vales %}<a href="{% url 'painel:funcionario' l.entregador.pk %}">{{ l.vales|brl }}</a>{% else %}—{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr><td colspan="3"><strong>Total</strong></td><td class="right num"><strong>{{ qtd_entregas }}</strong></td><td class="right num"><strong>{{ total_taxas|brl }}</strong></td><td class="hide-mobile"></td></tr></tfoot>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>Nenhum entregador cadastrado</strong>Cadastre a equipe abaixo. Enquanto não houver ninguém, os pedidos saem para entrega sem escolher entregador.</div>
+    {% endif %}
+  </section>
+
+  <div class="grid grid-2">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Montar a bag</h2>
+        <span class="muted small">{{ prontos|length }} entrega{{ prontos|length|pluralize }} em preparo</span>
+      </div>
+      {% if prontos %}
+        <form method="post" action="{% url 'painel:despachar' %}" class="panel-body grid">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <div class="bag-list">
+            {% for p in prontos %}
+              <label class="check bag-item">
+                <input type="checkbox" name="pedidos" value="{{ p.pk }}">
+                <span><strong>#{{ p.readable_code }}</strong> · {{ p.customer_name }}<br><span class="muted small">{{ p.delivery_neighborhood|default:"Bairro não informado" }} · taxa {{ p.delivery_fee|brl }} · {{ p.created_at|tempo_desde }}</span></span>
+              </label>
+            {% endfor %}
+          </div>
+          {% if usa_entregadores and not entregadores_hoje %}
+            <div class="alert alert-warning">Ninguém está marcado como trabalhando hoje. Ligue o botão "Fora hoje" de quem veio trabalhar.</div>
+          {% else %}
+            <div class="btn-row">
+              {% if usa_entregadores %}
+                <select name="entregador" required aria-label="Entregador" style="flex:1 1 180px">
+                  <option value="">Quem vai levar?</option>
+                  {% for e in entregadores_hoje %}<option value="{{ e.pk }}">{{ e.name }}</option>{% endfor %}
+                </select>
+              {% endif %}
+              <button type="submit" class="btn btn-primary">Saiu para entrega</button>
+            </div>
+            <p class="muted small">Os pedidos marcados saem juntos com o mesmo entregador e cada cliente é avisado no WhatsApp.</p>
+          {% endif %}
+        </form>
+      {% else %}
+        <div class="empty"><strong>Nenhuma entrega em preparo</strong>Os pedidos de entrega confirmados aparecem aqui para sair na bag.</div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Na rua agora</h2></div>
+      {% if em_rota %}
+        <div class="panel-body grid">
+          {% for grupo in em_rota %}
+            <div>
+              <h3 class="small" style="margin:0 0 6px">{% if grupo.entregador %}{{ grupo.entregador.name }}{% else %}Sem entregador{% endif %} <span class="muted">· {{ grupo.pedidos|length }} pedido{{ grupo.pedidos|length|pluralize }}</span></h3>
+              {% for p in grupo.pedidos %}
+                <div class="route-row">
+                  <span><a class="row-link" href="{% url 'painel:pedido' p.pk %}">#{{ p.readable_code }}</a> <span class="muted small">{{ p.delivery_neighborhood }} · saiu {{ p.updated_at|tempo_desde }}</span></span>
+                  <form method="post" action="{% url 'painel:pedido_status' p.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="status" value="CONCLUIDO">
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-sm">Entregue</button>
+                  </form>
+                </div>
+              {% endfor %}
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty"><strong>Ninguém na rua</strong>Quando um pedido sair para entrega, ele aparece aqui até ser marcado como entregue.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Cadastrar entregador</h2></div>
+    <form method="post" class="panel-body filters">
+      {% csrf_token %}
+      <div class="field" style="flex:2 1 220px">
+        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}{{ form.name.errors }}
+      </div>
+      <div class="field" style="flex:1 1 180px">
+        <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }} <span class="muted">(opcional)</span></label>
+        {{ form.phone }}{{ form.phone.errors }}
+      </div>
+      <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+  </section>
+
+  <div class="callout">
+    <strong>Como conta:</strong> uma entrega entra na soma quando o pedido é marcado como <strong>Entregue / Concluído</strong> no período escolhido, e vale a taxa de entrega cobrada do cliente.
+    Pedidos cancelados depois de sair não entram. Pedido com bairro fora da lista chega com taxa R$ 0,00: confira esses à parte.
+    "Trabalhando" vale só para hoje: amanhã todos começam como "Fora hoje".
+  </div>
+{% endblock %}

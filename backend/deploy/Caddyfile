@@ -1,0 +1,55 @@
+# Servidor web do VPS: entrega o site e o sistema, com HTTPS automático (Let's Encrypt).
+# Os domínios vêm do .env.production (SITE_DOMAIN, SYSTEM_DOMAIN).
+{
+	email {$ACME_EMAIL}
+	{$CADDY_EXTRA_GLOBAL}
+}
+
+# Site do cliente (arquivos gerados pelo npm run build)
+{$SITE_DOMAIN} {
+	root * /srv/site
+	encode zstd gzip
+	file_server
+
+	# Arquivos com hash no nome nunca mudam; a página e o service worker sempre vêm atualizados
+	@assets path /assets/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+	@fresh path / /index.html /sw.js /manifest.json
+	header @fresh Cache-Control "no-cache"
+}
+
+www.{$SITE_DOMAIN} {
+	redir https://{$SITE_DOMAIN}{uri} permanent
+}
+
+# Sistema: painel, API, app do entregador e Traccar
+{$SYSTEM_DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 10MB
+	}
+
+	# Fotos enviadas pelo painel
+	handle_path /media/* {
+		root * /srv/media
+		file_server
+		header Cache-Control "public, max-age=604800"
+	}
+
+	handle {
+		reverse_proxy web:8000
+	}
+
+	# Sistema fora do ar (reinício, atualização, falha): página amigável em vez do erro cru.
+	# Na API a resposta continua sem corpo JSON; o site mostra uma frase amigável nesse caso.
+	handle_errors 502 503 504 {
+		@pagina not path /api/*
+		handle @pagina {
+			root * /srv/errors
+			rewrite * /indisponivel.html
+			file_server {
+				status 503
+			}
+		}
+	}
+}

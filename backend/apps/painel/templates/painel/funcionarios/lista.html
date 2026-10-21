@@ -1,0 +1,116 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Funcionários e vales{% endblock %}
+{% block heading %}Funcionários e vales{% endblock %}
+{% block actions %}
+  <nav class="segmented" aria-label="Mês">
+    <a href="?mes={{ mes_anterior|date:'Y-m' }}" aria-label="Mês anterior">‹</a>
+    <a aria-current="true">{{ mes_label|capfirst }}</a>
+    {% if mes_seguinte %}<a href="?mes={{ mes_seguinte|date:'Y-m' }}" aria-label="Próximo mês">›</a>{% endif %}
+  </nav>
+{% endblock %}
+{% block content %}
+  <section class="kpis" aria-label="Vales de {{ mes_label }}">
+    <div class="kpi is-gold">
+      <div class="kpi-label">Vales no mês</div>
+      <div class="kpi-value">{{ total_mes|brl }}</div>
+      <div class="kpi-note">{{ mes_label }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Vales lançados</div>
+      <div class="kpi-value">{{ qtd_vales }}</div>
+      <div class="kpi-note">no mês</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Pegaram vale</div>
+      <div class="kpi-value">{{ qtd_com_vale }}</div>
+      <div class="kpi-note">de {{ linhas|length }} funcionário{{ linhas|length|pluralize }}</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Lançar vale</h2></div>
+    {% if form_vale.fields.employee.queryset.exists %}
+      <form method="post" class="panel-body filters">
+        {% csrf_token %}
+        <input type="hidden" name="acao" value="vale">
+        {% include "painel/_campo.html" with field=form_vale.employee classe="flex-2" %}
+        {% include "painel/_campo.html" with field=form_vale.amount classe="flex-1" %}
+        {% include "painel/_campo.html" with field=form_vale.date classe="flex-1" %}
+        {% include "painel/_campo.html" with field=form_vale.notes classe="flex-2" %}
+        <button type="submit" class="btn btn-primary">Lançar vale</button>
+      </form>
+    {% else %}
+      <div class="empty"><strong>Cadastre a equipe primeiro</strong>Use o formulário "Cadastrar funcionário" no fim da página.</div>
+    {% endif %}
+  </section>
+
+  <div class="grid grid-2">
+    <section class="panel">
+      <div class="panel-head"><h2>Por funcionário · {{ mes_label }}</h2></div>
+      {% if linhas %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Funcionário</th><th class="right">Vales</th><th class="right">Total</th></tr></thead>
+            <tbody>
+              {% for l in linhas %}
+                <tr {% if not l.funcionario.is_active %}class="is-off"{% endif %}>
+                  <td><a class="row-link" href="{% url 'painel:funcionario' l.funcionario.pk %}">{{ l.funcionario.name }}</a><br><span class="muted small">{{ l.funcionario.get_role_display }}{% if not l.funcionario.is_active %} · fora da equipe{% endif %}</span></td>
+                  <td class="right num">{{ l.qtd|default:"—" }}</td>
+                  <td class="right num"><strong>{% if l.total %}{{ l.total|brl }}{% else %}—{% endif %}</strong></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot><tr><td><strong>Total</strong></td><td class="right num"><strong>{{ qtd_vales }}</strong></td><td class="right num"><strong>{{ total_mes|brl }}</strong></td></tr></tfoot>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty"><strong>Nenhum funcionário cadastrado</strong>Cadastre a equipe no fim da página.</div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Vales lançados · {{ mes_label }}</h2></div>
+      {% if vales %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Funcionário</th><th class="right">Valor</th><th></th></tr></thead>
+            <tbody>
+              {% for v in vales %}
+                <tr>
+                  <td class="nowrap">{{ v.date|date:"d/m" }}</td>
+                  <td>{{ v.employee.name }}{% if v.notes %}<br><span class="muted small">{{ v.notes }}</span>{% endif %}{% if v.created_by %}<br><span class="muted small">lançado por {{ v.created_by.get_full_name|default:v.created_by.username }}</span>{% endif %}</td>
+                  <td class="right num">{{ v.amount|brl }}</td>
+                  <td class="right">
+                    <form method="post" action="{% url 'painel:vale_excluir' v.pk %}" data-confirm="Excluir o vale de {{ v.amount|brl }} de {{ v.employee.name }}?">
+                      {% csrf_token %}
+                      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                      <button type="submit" class="btn btn-sm btn-ghost">Excluir</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty"><strong>Nenhum vale em {{ mes_label }}</strong>Os vales lançados aparecem aqui.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Cadastrar funcionário</h2>
+      <span class="muted small">Entregadores cadastrados aqui aparecem também na tela Entregadores.</span>
+    </div>
+    <form method="post" class="panel-body filters">
+      {% csrf_token %}
+      <input type="hidden" name="acao" value="funcionario">
+      {% include "painel/_campo.html" with field=form_funcionario.name classe="flex-2" %}
+      {% include "painel/_campo.html" with field=form_funcionario.role classe="flex-1" %}
+      {% include "painel/_campo.html" with field=form_funcionario.phone classe="flex-1" %}
+      <button type="submit" class="btn btn-primary">Cadastrar</button>
+    </form>
+  </section>
+{% endblock %}

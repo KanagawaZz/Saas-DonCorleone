@@ -1,0 +1,115 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Início{% endblock %}
+{% block heading %}Visão geral{% endblock %}
+{% block actions %}
+  <nav class="segmented" aria-label="Período">
+    {% for key, label in periodos %}
+      <a href="?periodo={{ key }}" {% if key == periodo %}aria-current="true"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+{% endblock %}
+
+{% block content %}
+  {% if alertas %}
+    <section class="alerts" aria-label="Avisos">
+      {% for alerta in alertas %}
+        <div class="alert alert-{{ alerta.tom }}">{{ alerta.texto }} <a href="{% url alerta.link %}">Ver</a></div>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  <section class="kpis" aria-label="Indicadores de {{ periodo_label|lower }}">
+    <div class="kpi is-gold">
+      <div class="kpi-label">Valor registrado</div>
+      <div class="kpi-value">{{ valor_registrado|brl }}</div>
+      <div class="kpi-note">{{ qtd_pedidos }} pedido{{ qtd_pedidos|pluralize }} não cancelado{{ qtd_pedidos|pluralize }} · {{ periodo_label|lower }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Pedidos concluídos</div>
+      <div class="kpi-value">{{ valor_concluido|brl }}</div>
+      <div class="kpi-note">{{ qtd_concluidos }} entregue{{ qtd_concluidos|pluralize }} / retirado{{ qtd_concluidos|pluralize }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Ticket médio</div>
+      <div class="kpi-value">{{ ticket_medio|brl }}</div>
+      <div class="kpi-note">valor registrado ÷ pedidos</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Cancelados</div>
+      <div class="kpi-value">{{ qtd_cancelados }}</div>
+      <div class="kpi-note">{{ periodo_label|lower }}</div>
+    </div>
+  </section>
+  <p class="muted small">"Valor registrado" é a soma dos pedidos feitos pelo site que não foram cancelados. Não é faturamento confirmado: pagamentos são conferidos pela equipe.</p>
+
+  <div class="grid grid-2">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Em andamento agora</h2>
+        <a class="btn btn-sm" href="{% url 'painel:pedidos' %}">Abrir quadro</a>
+      </div>
+      <div class="panel-body">
+        {% if em_aberto %}
+          <ul class="timeline">
+            {% for label, qtd, tom in em_aberto_por_status %}
+              <li class="tone-{{ tom }}"><span><strong class="num">{{ qtd }}</strong> {{ label|lower }}</span></li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="empty"><strong>Nenhum pedido em andamento</strong>Os pedidos do site aparecem aqui assim que chegam.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Mais pedidos · {{ periodo_label|lower }}</h2></div>
+      <div class="panel-body grid grid-2">
+        <div>
+          <h3 class="muted small" style="margin-bottom:8px">Sabores de pizza</h3>
+          {% for s in top_sabores %}
+            <div class="small" style="display:flex;justify-content:space-between;gap:8px;padding:3px 0"><span>{{ s.flavor_name_snapshot }}</span><span class="num muted">{{ s.qtd }}</span></div>
+          {% empty %}
+            <p class="muted small">Sem pizzas no período.</p>
+          {% endfor %}
+        </div>
+        <div>
+          <h3 class="muted small" style="margin-bottom:8px">Outros itens</h3>
+          {% for i in top_itens %}
+            <div class="small" style="display:flex;justify-content:space-between;gap:8px;padding:3px 0"><span>{{ i.product_name_snapshot }}</span><span class="num muted">{{ i.qtd }}</span></div>
+          {% empty %}
+            <p class="muted small">Sem itens no período.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Últimos pedidos</h2>
+      <a class="btn btn-sm" href="{% url 'painel:pedidos_historico' %}">Ver histórico</a>
+    </div>
+    {% if ultimos_pedidos %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pedido</th><th>Cliente</th><th class="hide-mobile">Modalidade</th><th>Status</th><th class="right">Total</th><th class="hide-mobile">Quando</th></tr></thead>
+          <tbody>
+            {% for p in ultimos_pedidos %}
+              <tr>
+                <td><a class="row-link" href="{% url 'painel:pedido' p.pk %}">#{{ p.readable_code }}</a></td>
+                <td>{{ p.customer_name }}</td>
+                <td class="hide-mobile">{{ p.get_fulfillment_mode_display }}</td>
+                <td><span class="badge tone-{{ p.status|status_tone }}">{{ p.status|status_short }}</span></td>
+                <td class="right num">{{ p.total_amount|brl }}</td>
+                <td class="hide-mobile muted nowrap">{{ p.created_at|tempo_desde }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>Nenhum pedido {{ periodo_label|lower }}</strong>Quando o site receber pedidos, eles aparecem aqui.</div>
+    {% endif %}
+  </section>
+{% endblock %}

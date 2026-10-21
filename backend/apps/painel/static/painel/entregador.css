@@ -1,0 +1,40 @@
+/* App do entregador: uma coluna, botões grandes para usar com uma mão */
+.courier-main {
+  max-width: 560px; margin: 0 auto; padding: max(16px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; gap: 18px;
+}
+.courier-head { display: flex; align-items: center; gap: 10px; }
+.courier-title { margin-bottom: 8px; }
+.courier-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 14px; display: flex; flex-direction: column; gap: 10px;
+}
+.courier-card + .courier-card { margin-top: 10px; }
+.shift { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; border-left: 4px solid var(--muted); }
+.shift.is-on { border-left-color: var(--green); }
+.shift .warn { color: #F3A272; font-weight: 700; }
+.shift .btn { padding: 12px 16px; }
+.delivery { border-left: 4px solid var(--t-rota); }
+.delivery-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.delivery-customer { font-weight: 800; font-size: 1.05rem; }
+.delivery address { font-style: normal; color: var(--text-2); line-height: 1.45; }
+.pay { padding: 10px 12px; border-radius: 8px; background: var(--gold-soft); color: var(--text); }
+.pay.is-paid { background: var(--green-soft); color: #6FD9A2; font-weight: 700; }
+.delivery-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.delivery-actions .btn, .delivery .btn-block { padding: 12px; font-size: 0.95rem; }
+.courier-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.courier-stats .courier-card { margin: 0; gap: 2px; padding: 12px; }
+.courier-stats strong { font-size: 1.05rem; }
+.list { gap: 0; padding: 4px 14px; }
+.list-row { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+.list-row:last-child { border-bottom: none; }
+.traccar-link { margin-top: -8px; padding: 12px; }
+.connect { border: 1px solid var(--gold); background: var(--gold-soft); }
+.connect .btn { padding: 13px; font-size: 0.95rem; }
+.setup summary { cursor: pointer; }
+.setup ol { margin: 6px 0 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.setup code { display: inline-block; margin-top: 4px; padding: 6px 8px; border-radius: 6px; background: var(--bg); word-break: break-all; cursor: copy; }
+.setup code[data-copiado="1"]::after { content: "  copiado"; color: #6FD9A2; }
+.courier-empty { min-height: 70vh; display: grid; place-content: center; justify-items: center; gap: 12px; text-align: center; }
+.center { text-align: center; }
+@media (max-width: 380px) { .courier-stats { grid-template-columns: 1fr 1fr; } }

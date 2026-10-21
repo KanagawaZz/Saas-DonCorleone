@@ -1,0 +1,43 @@
+{% load painel %}
+{% with atrasado=p.created_at|minutos_desde %}
+<article class="order-card tone-{{ p.status|status_tone }} {% if p.status == 'NOVO' and atrasado >= 5 %}is-late{% endif %}" data-pedido-id="{{ p.pk }}" data-status="{{ p.status }}">
+  <div class="order-top">
+    <a class="order-code" href="{% url 'painel:pedido' p.pk %}">#{{ p.readable_code }}</a>
+    <span class="tag {% if p.fulfillment_mode == 'entrega' %}tag-gold{% endif %}">{% if p.fulfillment_mode == 'entrega' %}Entrega{% else %}Retirada{% endif %}</span>
+    <span class="order-time {% if p.status == 'NOVO' and atrasado >= 5 %}is-late{% endif %}" title="{{ p.created_at|date:'d/m H:i' }}">{{ p.created_at|tempo_desde }}</span>
+  </div>
+  <div class="order-customer">{{ p.customer_name }}{% if p.fulfillment_mode == 'entrega' and p.delivery_neighborhood %} <span class="muted small">· {{ p.delivery_neighborhood }}</span>{% endif %}</div>
+  {% if p.status == 'SAIU_PARA_ENTREGA' and p.courier %}
+    <div class="small">Com <a href="{% url 'painel:entregador' p.courier.pk %}"><strong>{{ p.courier.name }}</strong></a></div>
+  {% endif %}
+  <ul class="order-items">
+    {% for item in p.items.all %}
+      <li title="{{ item.quantity }}x {{ item.product_name_snapshot }}">{{ item.quantity }}x {% if item.flavors.all %}{% for f in item.flavors.all %}{{ f.flavor_name_snapshot }}{% if not forloop.last %} + {% endif %}{% endfor %} <span class="muted">({{ item.size_name_snapshot|default:item.product_name_snapshot }})</span>{% else %}{{ item.product_name_snapshot }}{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% if 'A CONFIRMAR' in p.notes or 'NÃO APLICADO' in p.notes %}
+    <span class="tag tag-warn">Conferir observações</span>
+  {% endif %}
+  {% if p.needs_change and p.change_for and p.change_for < p.total_amount %}
+    <span class="tag tag-red">Troco menor que o total</span>
+  {% endif %}
+  <div class="order-foot">
+    <span class="tag">{{ p.get_payment_method_display }}{% if p.needs_change and p.change_for %} · troco p/ {{ p.change_for|brl }}{% endif %}</span>
+    <span class="order-total">{{ p.total_amount|brl }}</span>
+  </div>
+  {% if p.acoes %}
+    <div class="order-actions">
+      {% for acao in p.acoes %}
+        <form method="post" action="{% url 'painel:pedido_status' p.pk %}" {% if acao.cancelar %}data-pede-motivo{% endif %}>
+          {% csrf_token %}
+          <input type="hidden" name="status" value="{{ acao.status }}">
+          <input type="hidden" name="next" value="{{ voltar_para }}">
+          {% if acao.cancelar %}<input type="hidden" name="motivo" value="">{% endif %}
+          {% if acao.status == 'SAIU_PARA_ENTREGA' %}{% include "painel/pedidos/_escolher_entregador.html" %}{% endif %}
+          <button type="submit" class="btn btn-sm {% if acao.cancelar %}btn-danger{% elif forloop.first %}btn-primary{% endif %}" {% if acao.status == 'SAIU_PARA_ENTREGA' and usa_entregadores and not entregadores_hoje %}disabled{% endif %}>{{ acao.rotulo }}</button>
+        </form>
+      {% endfor %}
+    </div>
+  {% endif %}
+</article>
+{% endwith %}

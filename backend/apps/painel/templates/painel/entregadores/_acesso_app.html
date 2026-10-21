@@ -1,0 +1,47 @@
+  <section class="panel" id="app-entregador">
+    <div class="panel-head"><h2>App do entregador e localização</h2></div>
+    <div class="panel-body grid">
+      {% if entregador.access_token %}
+        <div class="qr-grid">
+          <figure class="qr-card">
+            <div class="qr-box" data-qr="{{ link_app }}" role="img" aria-label="QR Code do app do entregador"></div>
+            <figcaption><strong>1. App do entregador</strong><br><span class="muted small">Aponte a <strong>câmera do celular</strong> e toque no link. Depois, "Adicionar à tela inicial".</span></figcaption>
+          </figure>
+          <figure class="qr-card">
+            <div class="qr-box" data-qr="{{ traccar_qr }}" role="img" aria-label="QR Code de configuração do Traccar Client"></div>
+            <figcaption><strong>2. Traccar Client</strong><br><span class="muted small">No Traccar, abra <strong>Configurações</strong> e toque no <strong>ícone de QR Code</strong> no topo. Depois, ligue o "Rastreamento contínuo".</span></figcaption>
+          </figure>
+        </div>
+        <details>
+          <summary class="small">Ver os dados por escrito</summary>
+          <dl class="dl" style="margin-top:8px">
+          <dt>Link do app</dt><dd><code class="copyable">{{ link_app }}</code></dd>
+          <dt>Traccar: Server URL</dt><dd><code class="copyable">{{ traccar_url }}</code></dd>
+          <dt>Traccar: Device identifier</dt><dd><code class="copyable">{{ entregador.access_token }}</code></dd>
+          </dl>
+        </details>
+        {% if endereco_local %}
+          <div class="alert alert-warning">Este endereço só funciona neste computador. Para o celular do entregador acessar, o sistema precisa estar publicado na internet (com HTTPS).</div>
+        {% endif %}
+        <div class="btn-row">
+          <form method="post" action="{% url 'painel:entregador_acesso' entregador.pk %}">
+            {% csrf_token %}<input type="hidden" name="acao" value="enviar"><input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" class="btn btn-primary" {% if not entregador.phone %}disabled title="Cadastre o WhatsApp do entregador"{% endif %}>Enviar link pelo WhatsApp</button>
+          </form>
+          <form method="post" action="{% url 'painel:entregador_acesso' entregador.pk %}" data-confirm="Gerar um novo link? O atual para de funcionar no app e no Traccar.">
+            {% csrf_token %}<input type="hidden" name="acao" value="gerar"><input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" class="btn btn-ghost">Gerar novo link</button>
+          </form>
+        </div>
+        {% if not entregador.phone %}<p class="muted small">Para enviar pelo WhatsApp, cadastre o número do entregador.</p>{% endif %}
+        <p class="muted small">O link é pessoal: quem tiver ele entra no app como {{ entregador.name }}. Se vazar ou o celular for perdido, gere um novo.</p>
+      {% else %}
+        <p class="muted">Gere o link pessoal de {{ entregador.name }} para ele abrir o app do entregador (entregas da bag com rota, taxas do dia) e configurar o Traccar Client, que envia a localização para o mapa.</p>
+        <form method="post" action="{% url 'painel:entregador_acesso' entregador.pk %}">
+          {% csrf_token %}<input type="hidden" name="acao" value="gerar"><input type="hidden" name="next" value="{{ request.path }}">
+          <button type="submit" class="btn btn-primary">Gerar link de acesso</button>
+        </form>
+      {% endif %}
+    </div>
+  </section>
+  {% if entregador.access_token %}<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>{% endif %}

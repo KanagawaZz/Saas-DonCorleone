@@ -1,0 +1,61 @@
+# Evolution API (WhatsApp) para os avisos automáticos de pedido.
+# Subir:   docker compose up -d
+# Parar:   docker compose down        (a conexão do WhatsApp fica salva nos volumes)
+# As chaves vêm do arquivo .env da raiz (veja .env.example).
+name: doncorleone
+
+services:
+  evolution-api:
+    image: evoapicloud/evolution-api:v2.3.7
+    container_name: doncorleone-evolution
+    restart: unless-stopped
+    # Só a própria máquina acessa: o painel Django conversa com a API por aqui.
+    # Porta 8081 para não colidir com outras instâncias da Evolution na 8080.
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      SERVER_URL: http://localhost:8081
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:?Defina EVOLUTION_API_KEY no .env}
+      LANGUAGE: pt-BR
+      DEL_INSTANCE: "false"
+      QRCODE_LIMIT: 30
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: postgresql://evolution:${EVOLUTION_DB_PASSWORD:?Defina EVOLUTION_DB_PASSWORD no .env}@evolution-postgres:5432/evolution?schema=public
+      DATABASE_CONNECTION_CLIENT_NAME: doncorleone
+      DATABASE_SAVE_DATA_INSTANCE: "true"
+      # O sistema só envia avisos: conversas e contatos dos clientes não são guardados
+      DATABASE_SAVE_DATA_NEW_MESSAGE: "false"
+      DATABASE_SAVE_MESSAGE_UPDATE: "false"
+      DATABASE_SAVE_DATA_CONTACTS: "false"
+      DATABASE_SAVE_DATA_CHATS: "false"
+      DATABASE_SAVE_DATA_LABELS: "false"
+      DATABASE_SAVE_DATA_HISTORIC: "false"
+      # Cache em memória no lugar do Redis (alternativa prevista na documentação; basta uma pizzaria por instância)
+      CACHE_REDIS_ENABLED: "false"
+      CACHE_LOCAL_ENABLED: "true"
+    volumes:
+      - evolution_instances:/evolution/instances
+    depends_on:
+      evolution-postgres:
+        condition: service_healthy
+
+  evolution-postgres:
+    image: postgres:16-alpine
+    container_name: doncorleone-evolution-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: evolution
+      POSTGRES_USER: evolution
+      POSTGRES_PASSWORD: ${EVOLUTION_DB_PASSWORD:?Defina EVOLUTION_DB_PASSWORD no .env}
+    volumes:
+      - evolution_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U evolution -d evolution"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  evolution_instances:
+  evolution_postgres:

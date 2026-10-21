@@ -1,0 +1,125 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Pedido #{{ pedido.readable_code }}{% endblock %}
+{% block heading %}Pedido #{{ pedido.readable_code }}{% endblock %}
+{% block actions %}
+  <span class="badge tone-{{ pedido.status|status_tone }}">{{ pedido.get_status_display }}</span>
+  <a class="btn btn-sm" href="{% url 'thermal-receipt-print' pedido.readable_code %}?autoprint=1" target="_blank" rel="noopener">Imprimir comanda</a>
+{% endblock %}
+{% block content %}
+  {% if pedido.acoes %}
+    <section class="panel panel-body">
+      <div class="btn-row">
+        <span class="muted small" style="margin-right:4px">Próximo passo:</span>
+        {% for acao in pedido.acoes %}
+          <form method="post" action="{% url 'painel:pedido_status' pedido.pk %}" {% if acao.cancelar %}data-pede-motivo{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="status" value="{{ acao.status }}">
+            {% if acao.cancelar %}<input type="hidden" name="motivo" value="">{% endif %}
+            {% if acao.status == 'SAIU_PARA_ENTREGA' %}<span class="inline-select">{% include "painel/pedidos/_escolher_entregador.html" %}</span>{% endif %}
+            <button type="submit" class="btn {% if acao.cancelar %}btn-danger{% elif forloop.first %}btn-primary{% endif %}" {% if acao.status == 'SAIU_PARA_ENTREGA' and usa_entregadores and not entregadores_hoje %}disabled{% endif %}>{{ acao.rotulo }}</button>
+          </form>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if pedido.notes %}
+    <div class="note-box"><strong>Observações:</strong> {{ pedido.notes }}</div>
+  {% endif %}
+
+  <div class="detail-grid">
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head"><h2>Itens</h2><span class="muted small">{{ pedido.created_at|date:"d/m/Y \à\s H:i" }} · {{ pedido.created_at|tempo_desde }}</span></div>
+        <div class="panel-body">
+          <ul class="item-list">
+            {% for item in pedido.items.all %}
+              <li>
+                <strong>{{ item.quantity }}x {{ item.product_name_snapshot }}</strong>
+                <span class="num">{{ item.subtotal_snapshot|brl }}</span>
+                {% if item.flavors.all %}
+                  <span class="item-sub">{% for f in item.flavors.all %}{{ f.proportion }} {{ f.flavor_name_snapshot }}{% if not forloop.last %} · {% endif %}{% endfor %}</span>
+                {% endif %}
+                {% if item.crust_name_snapshot and item.crust_name_snapshot != 'Sem Borda' %}
+                  <span class="item-sub">Borda: {{ item.crust_name_snapshot }} {% if item.crust_price_snapshot %}(+{{ item.crust_price_snapshot|brl }}){% else %}(grátis){% endif %}</span>
+                {% endif %}
+                {% if item.quantity > 1 %}<span class="item-sub muted">{{ item.unit_price_snapshot|brl }} cada</span>{% endif %}
+                {% if item.notes %}<span class="item-sub"><span class="tag tag-warn">{{ item.notes }}</span></span>{% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+          <div class="totals" style="margin-top:12px">
+            <span class="muted">Subtotal</span><span class="num">{{ pedido.subtotal|brl }}</span>
+            {% if pedido.discount_amount %}<span class="muted">Desconto {% if pedido.coupon_applied %}({{ pedido.coupon_applied }}){% endif %}</span><span class="num">-{{ pedido.discount_amount|brl }}</span>{% endif %}
+            {% if pedido.fulfillment_mode == 'entrega' %}<span class="muted">Taxa de entrega</span><span class="num">{{ pedido.delivery_fee|brl }}</span>{% endif %}
+            <span class="grand">Total</span><span class="grand num">{{ pedido.total_amount|brl }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Histórico</h2></div>
+        <div class="panel-body">
+          <ul class="timeline">
+            {% for h in pedido.status_history.all %}
+              <li class="tone-{{ h.status|status_tone }}">
+                <span><strong>{{ h.status|status_short }}</strong> <span class="muted small">· {{ h.created_at|date:"d/m H:i" }}{% if h.changed_by %} · {{ h.changed_by.get_full_name|default:h.changed_by.username }}{% endif %}</span><br><span class="small">{{ h.notes }}</span></span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head"><h2>Cliente</h2></div>
+        <div class="panel-body">
+          <dl class="dl">
+            <dt>Nome</dt><dd>{{ pedido.customer_name }}</dd>
+            <dt>WhatsApp</dt><dd><a href="{{ pedido.customer_phone|whatsapp_link }}" target="_blank" rel="noopener">{{ pedido.customer_phone|telefone }}</a></dd>
+            {% if pedido.customer_user %}<dt>Conta</dt><dd><span class="tag tag-gold">Clube VIP</span></dd>{% endif %}
+          </dl>
+          {% if pedido.customer_phone %}<a class="btn btn-sm btn-block" style="margin-top:12px" href="{% url 'painel:cliente' pedido.customer_phone %}">Ver histórico do cliente</a>{% endif %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>{{ pedido.get_fulfillment_mode_display }}</h2></div>
+        <div class="panel-body">
+          {% if pedido.fulfillment_mode == 'entrega' %}
+            <dl class="dl">
+              <dt>Endereço</dt><dd>{{ pedido.delivery_street|default:"—" }}, {{ pedido.delivery_number|default:"s/n" }}</dd>
+              {% if pedido.delivery_complement %}<dt>Compl.</dt><dd>{{ pedido.delivery_complement }}</dd>{% endif %}
+              <dt>Bairro</dt><dd>{{ pedido.delivery_neighborhood }} · {{ pedido.delivery_city }}</dd>
+              {% if pedido.delivery_reference %}<dt>Ref.</dt><dd>{{ pedido.delivery_reference }}</dd>{% endif %}
+              {% if pedido.delivery_zipcode %}<dt>CEP</dt><dd>{{ pedido.delivery_zipcode }}</dd>{% endif %}
+              {% if pedido.courier %}<dt>Entregador</dt><dd><a href="{% url 'painel:entregador' pedido.courier.pk %}">{{ pedido.courier.name }}</a></dd>{% endif %}
+            </dl>
+          {% else %}
+            <p>Retirada no balcão{% if pedido.pickup_requested_time %} · horário pretendido: <strong>{{ pedido.pickup_requested_time }}</strong>{% endif %}</p>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Pagamento</h2></div>
+        <div class="panel-body">
+          <dl class="dl">
+            <dt>Forma</dt><dd>{{ pedido.get_payment_method_display }}</dd>
+            {% if pedido.needs_change and pedido.change_for %}
+              <dt>Troco para</dt><dd class="num">{{ pedido.change_for|brl }}</dd>
+              {% if pedido.change_for < pedido.total_amount %}
+                <dt>Atenção</dt><dd><span class="tag tag-red">Valor menor que o total: confirme com o cliente</span></dd>
+              {% else %}
+                <dt>Levar</dt><dd class="num"><strong>{{ pedido.calculated_change|brl }}</strong></dd>
+              {% endif %}
+            {% endif %}
+          </dl>
+          {% if pedido.payment_method == 'pix' %}<p class="muted small" style="margin-top:8px">Confira o PIX no app do banco antes de confirmar o pedido.</p>{% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

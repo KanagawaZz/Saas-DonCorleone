@@ -1,0 +1,118 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}{{ entregador.name }}{% endblock %}
+{% block heading %}{{ entregador.name }}{% endblock %}
+{% block actions %}{% include "painel/entregadores/_periodo.html" %}{% endblock %}
+{% block content %}
+  <p><a href="{% url 'painel:entregadores' %}{% query_com %}">← Todos os entregadores</a></p>
+
+  <section class="kpis" aria-label="Resumo de {{ periodo_label|lower }}">
+    <div class="kpi is-gold">
+      <div class="kpi-label">A receber</div>
+      <div class="kpi-value">{{ total_taxas|brl }}</div>
+      <div class="kpi-note">{{ periodo_label|lower }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Entregas feitas</div>
+      <div class="kpi-value">{{ entregues|length }}</div>
+      <div class="kpi-note">{{ periodo_label|lower }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Na rua agora</div>
+      <div class="kpi-value">{{ em_rota|length }}</div>
+      <div class="kpi-note">pedido{{ em_rota|length|pluralize }} na bag</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Hoje</div>
+      <form class="switch-form" method="post" action="{% url 'painel:entregador_trabalhando' entregador.pk %}" style="margin-top:8px">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="switch {% if entregador.is_working_today %}is-on{% endif %}" aria-pressed="{{ entregador.is_working_today|yesno:'true,false' }}">{% if entregador.is_working_today %}Trabalhando{% else %}Fora hoje{% endif %}</button>
+      </form>
+    </div>
+  </section>
+
+  {% if em_rota %}
+    <section class="panel">
+      <div class="panel-head"><h2>Na rua agora</h2></div>
+      <div class="panel-body grid">
+        {% for p in em_rota %}
+          <div class="route-row">
+            <span><a class="row-link" href="{% url 'painel:pedido' p.pk %}">#{{ p.readable_code }}</a> · {{ p.customer_name }} <span class="muted small">{{ p.delivery_neighborhood }} · saiu {{ p.updated_at|tempo_desde }}</span></span>
+            <form method="post" action="{% url 'painel:pedido_status' p.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="status" value="CONCLUIDO">
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="btn btn-sm">Entregue</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="panel">
+    <div class="panel-head"><h2>Entregas · {{ periodo_label|lower }}</h2></div>
+    {% if entregues %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pedido</th><th>Bairro</th><th class="hide-mobile">Saiu</th><th class="hide-mobile">Entregue</th><th class="right">Taxa</th></tr></thead>
+          <tbody>
+            {% for p in entregues %}
+              <tr>
+                <td><a class="row-link" href="{% url 'painel:pedido' p.pk %}">#{{ p.readable_code }}</a><br><span class="muted small">{{ p.customer_name }}</span></td>
+                <td>{{ p.delivery_neighborhood|default:"—" }}{% if not p.delivery_fee %} <span class="tag tag-warn">taxa a confirmar</span>{% endif %}</td>
+                <td class="hide-mobile nowrap">{{ p.saiu_em|date:"d/m H:i"|default:"—" }}</td>
+                <td class="hide-mobile nowrap">{{ p.entregue_em|date:"d/m H:i" }}</td>
+                <td class="right num">{{ p.delivery_fee|brl }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr><td colspan="4"><strong>Total</strong></td><td class="right num"><strong>{{ total_taxas|brl }}</strong></td></tr></tfoot>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>Nenhuma entrega {{ periodo_label|lower }}</strong>As entregas aparecem aqui quando o pedido é marcado como entregue.</div>
+    {% endif %}
+  </section>
+
+  {% if vales %}
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Vales · {{ periodo_label|lower }}</h2>
+        <a class="btn btn-sm" href="{% url 'painel:funcionario' entregador.pk %}">Ver todos os vales</a>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            {% for v in vales %}
+              <tr><td class="nowrap">{{ v.date|date:"d/m" }}</td><td>{{ v.notes|default:"—" }}</td><td class="right num">{{ v.amount|brl }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+
+  {% include "painel/entregadores/_acesso_app.html" %}
+
+  <section class="panel">
+    <div class="panel-head"><h2>Cadastro</h2></div>
+    <form method="post" class="panel-body filters">
+      {% csrf_token %}
+      <div class="field" style="flex:2 1 220px">
+        <label for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+        {{ form.name }}{{ form.name.errors }}
+      </div>
+      <div class="field" style="flex:1 1 180px">
+        <label for="{{ form.phone.id_for_label }}">{{ form.phone.label }} <span class="muted">(opcional)</span></label>
+        {{ form.phone }}{{ form.phone.errors }}
+      </div>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </form>
+    <form method="post" action="{% url 'painel:entregador_excluir' entregador.pk %}" class="panel-body" style="padding-top:0">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-sm btn-ghost" data-confirm="Remover {{ entregador.name }}? Só é possível se ainda não fez nenhuma entrega.">Remover entregador</button>
+    </form>
+  </section>
+{% endblock %}

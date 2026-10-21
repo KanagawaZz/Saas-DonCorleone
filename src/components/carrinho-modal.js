@@ -3,9 +3,9 @@
  * 
  * Funcionalidades evoluídas:
  * 1. Taxa de entrega calculada por bairro (Cuiabá e Várzea Grande) ou a confirmar
- * 2. Geração de código único legível (DC-DDMM-XXX)
- * 3. Envio de mensagem ultrarrápida (1ª linha para 3 segundos) via WhatsApp
- * 4. Tela pós-envio com código, chave Pix (copiar com 1 clique) e aviso de preparo
+ * 2. Envio do pedido direto para o sistema (o código DC-DDMM-XXX vem do backend)
+ * 3. Sem WhatsApp no fluxo do pedido: a pizzaria confirma pelo painel
+ * 4. Tela pós-envio com código, chave Pix (copiar com 1 clique) e acesso ao acompanhamento
  * 5. Bloqueio automático de pedidos quando fechado ou após o horário de corte (22:30)
  * 6. Autopreenchimento para quem recompra (localStorage) com opção de limpar
  * 7. Aplicação de desconto de promoções ativas no fuso de Cuiabá
@@ -15,16 +15,18 @@ import { carrinho } from '../utils/carrinho.js';
 import { formatarPreco, esc, extrairNumeroMoeda } from '../utils/dom.js';
 import { icone } from '../utils/icons.js';
 import { formatarTituloPizza } from '../utils/calculo-pizza.js';
-import { gerarLinkWhatsAppPedido, montarMensagemWhatsApp } from '../utils/whatsapp-order.js';
+import { gerarLinkWhatsApp } from '../utils/whatsapp.js';
+import { registrarPedidoRecente } from '../utils/pedidos-recentes.js';
 import { pararLenis, retomarLenis } from '../utils/motion.js';
 import bairrosLista from '../data/bairros.json';
 import { calcularTaxaEntrega } from '../utils/entrega.js';
-import { gerarCodigoPedido } from '../utils/codigo-pedido.js';
 import { obterStatusFuncionamento } from '../utils/horario.js';
 import { obterPromocaoAtiva } from '../utils/promocao.js';
 import { ITENS_COMPRE_JUNTO } from '../data/compre-junto.js';
+import { criarPedidoApi } from '../api/orders.js';
 
 const STORAGE_CLIENTE_KEY = 'don_corleone_cliente_v1';
+
 
 export function renderCarrinhoModal(config) {
   const tempoRetirada = config?.operacional?.tempoRetirada || config?.pagamento?.tempoMedioRetirada || '20 a 35 min';
@@ -263,7 +265,7 @@ export function renderCarrinhoModal(config) {
                   Nome do seu bairro <span class="campo-obrigatorio">*</span>
                 </label>
                 <input type="text" id="entrega-bairro-outro" name="entrega_bairro_outro" class="form-input" placeholder="Digite o nome do seu bairro..." />
-                <span class="form-help-subtle">A taxa para este bairro será confirmada pela atendente via WhatsApp.</span>
+                <span class="form-help-subtle">A taxa para este bairro será confirmada pela pizzaria junto com o pedido.</span>
               </div>
 
               <!-- Alerta Dinâmico da Taxa do Bairro -->
@@ -397,7 +399,7 @@ export function renderCarrinhoModal(config) {
             <div class="condicional-bloco mt-3" id="bloco-aviso-pix">
               <div class="pix-aviso-box">
                 <span class="pix-badge-pill">Atenção ao Pix</span>
-                <p>A chave Pix oficial (<strong>${config.pagamento?.pix?.chave || '65993605364'}</strong>) será apresentada na tela após o envio e a produção é iniciada <strong>após o envio do comprovante no WhatsApp</strong>.</p>
+                <p>A chave Pix oficial (<strong>${config.pagamento?.pix?.chave || '65993605364'}</strong>) aparece na tela após o envio. O pedido entra em preparo <strong>assim que a pizzaria conferir o pagamento</strong>.</p>
               </div>
             </div>
 
@@ -456,8 +458,8 @@ export function renderCarrinhoModal(config) {
           
           <div class="pos-envio-sucesso-header">
             <div class="pos-envio-icone-check">✓</div>
-            <span class="pos-envio-badge-tag">Pedido Encaminhado com Sucesso</span>
-            <h3 class="pos-envio-titulo">Seu Pedido está a Caminho!</h3>
+            <span class="pos-envio-badge-tag">Pedido Recebido</span>
+            <h3 class="pos-envio-titulo">Aguardando a confirmação da pizzaria</h3>
             <div class="pos-envio-codigo-wrap">
               <span class="codigo-label">Código do Pedido:</span>
               <span class="codigo-destaque" id="pos-envio-codigo-display">DC-0000-000</span>
@@ -492,32 +494,34 @@ export function renderCarrinhoModal(config) {
             </div>
 
             <div class="pix-aviso-importante">
-              <strong>${icone('alerta', 14)} REGRA DE PRODUÇÃO:</strong>
-              <span>Seu pedido entra em preparo assim que enviarmos a confirmação do comprovante. Envie o comprovante no WhatsApp.</span>
+              <strong>${icone('alerta', 14)} IMPORTANTE:</strong>
+              <span>${esc(config.pagamento?.pix?.avisoInstrucao || 'Faça o Pix com o valor total. Assim que conferirmos o pagamento, seu pedido é confirmado e entra em preparo.')}</span>
             </div>
           </div>
 
           <!-- Bloco Específico se Pagamento for Dinheiro ou Cartão -->
           <div class="pos-envio-outros-card" id="pos-envio-outros-card" style="display: none;">
-            <div class="outros-card-badge">Confirmação Pendente</div>
+            <div class="outros-card-badge">Pendente</div>
             <p id="pos-envio-outros-msg">
-              Pedido enviado! A atendente vai confirmar em instantes. Tempo médio: 40 min.
+              A pizzaria vai conferir e confirmar seu pedido em instantes.
             </p>
           </div>
 
           <!-- Botões de Ação na Tela Pós-Envio -->
           <div class="pos-envio-acoes">
-            <a href="#" target="_blank" rel="noopener noreferrer" class="btn btn--primary w-full" id="btn-reabrir-whats">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82a8.196 8.196 0 0 1-5.82 2.41c-1.47 0-2.91-.39-4.18-1.15l-.3-.18-3.11.82.83-3.03-.2-.31a8.21 8.21 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.23.89 2.42 1.02 2.59.13.17 1.76 2.69 4.27 3.77.6.26 1.06.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.3z"/>
-              </svg>
-              <span>Abrir WhatsApp Novamente</span>
+            <button type="button" class="btn btn--primary w-full" id="btn-acompanhar-rastreio">
+              📍 Acompanhar meu pedido
+            </button>
+
+            <a href="${gerarLinkWhatsApp(config)}" target="_blank" rel="noopener noreferrer" class="btn btn--outline w-full mt-2" id="btn-duvidas-whats">
+              Dúvidas? Fale com a gente no WhatsApp
             </a>
 
             <button type="button" class="btn btn--outline w-full mt-2" id="btn-novo-pedido">
               Fazer Outro Pedido
             </button>
           </div>
+
 
         </div>
 
@@ -532,10 +536,8 @@ export function renderCarrinhoModal(config) {
         </div>
 
         <button type="button" class="btn btn--primary btn--enviar-whats" id="btn-enviar-pedido-whats">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82a8.196 8.196 0 0 1-5.82 2.41c-1.47 0-2.91-.39-4.18-1.15l-.3-.18-3.11.82.83-3.03-.2-.31a8.21 8.21 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.23.89 2.42 1.02 2.59.13.17 1.76 2.69 4.27 3.77.6.26 1.06.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.3z"/>
-          </svg>
-          <span id="btn-enviar-label">Confirmar e Enviar para o WhatsApp</span>
+          ${icone('check', 20, 'btn-icon')}
+          <span id="btn-enviar-label">Enviar Pedido</span>
         </button>
       </footer>
 
@@ -614,10 +616,10 @@ export function initCarrinhoModal(config) {
   const btnCopiarPixLabel = document.querySelector('#btn-copiar-pix-label');
   const posOutrosCard = document.querySelector('#pos-envio-outros-card');
   const posOutrosMsg = document.querySelector('#pos-envio-outros-msg');
-  const btnReabrirWhats = document.querySelector('#btn-reabrir-whats');
   const btnNovoPedido = document.querySelector('#btn-novo-pedido');
 
-  let ultimoLinkWhatsGerado = '';
+  // Depois do envio o carrinho é esvaziado; isso evita que a tela de confirmação seja trocada pelo "carrinho vazio"
+  let telaPosEnvioAtiva = false;
 
   // 1. CARREGAR DADOS SALVOS NO LOCALSTORAGE (TAREFA 6)
   function carregarDadosSalvos() {
@@ -734,7 +736,7 @@ export function initCarrinhoModal(config) {
         btnEnviar.classList.remove('btn--bloqueado');
       }
       if (btnEnviarLabel) {
-        btnEnviarLabel.textContent = 'Confirmar e Enviar para o WhatsApp';
+        btnEnviarLabel.textContent = 'Enviar Pedido';
       }
     }
 
@@ -1216,6 +1218,7 @@ export function initCarrinhoModal(config) {
 
   // 5. RENDERIZAÇÃO DOS ITENS DO CARRINHO
   function renderizarItensModal() {
+    if (telaPosEnvioAtiva) return;
     const itens = carrinho.obterItens();
     const subtotal = carrinho.obterSubtotal();
 
@@ -1472,7 +1475,7 @@ export function initCarrinhoModal(config) {
           avisoTaxaDinamica.innerHTML = `<strong>Taxa para ${esc(dados.entregaInfo.bairro)}:</strong> ${formatarPreco(dados.entregaInfo.taxa)}`;
         } else if (dados.entregaInfo.statusTaxa === 'a_confirmar' && (inputBairroBusca?.value?.trim() || inputOutroBairro?.value?.trim())) {
           const bNomeAviso = inputOutroBairro?.value?.trim() || inputBairroBusca?.value?.trim() || 'Outro bairro';
-          avisoTaxaDinamica.innerHTML = `<strong>${esc(bNomeAviso)}:</strong> taxa a confirmar com a atendente via WhatsApp.`;
+          avisoTaxaDinamica.innerHTML = `<strong>${esc(bNomeAviso)}:</strong> taxa confirmada pela pizzaria junto com o pedido.`;
         } else {
           avisoTaxaDinamica.innerHTML = '<strong>Taxa de entrega:</strong> informe o CEP ou digite seu bairro acima para calcular.';
         }
@@ -1766,6 +1769,7 @@ export function initCarrinhoModal(config) {
     document.body.style.overflow = 'hidden';
 
     // Restaura tela caso estivesse no pós-envio
+    telaPosEnvioAtiva = false;
     if (telaPosEnvio) telaPosEnvio.style.display = 'none';
     if (footerModal) footerModal.style.display = 'flex';
 
@@ -1813,8 +1817,14 @@ export function initCarrinhoModal(config) {
     cardapio?.scrollIntoView({ behavior: 'smooth' });
   });
 
-  // 10. ENVIO DO PEDIDO (REVALIDAÇÃO DE HORÁRIO + CÓDIGO + TELA PÓS-ENVIO)
-  btnEnviar?.addEventListener('click', () => {
+  // 10. ENVIO DO PEDIDO (SISTEMA + TELA PÓS-ENVIO + ACOMPANHAMENTO)
+  let enviandoPedido = false;
+  // Reaproveitada nas novas tentativas: se o servidor salvou mas a resposta se perdeu, não duplica o pedido
+  let chaveIdempotencia = null;
+  btnEnviar?.addEventListener('click', async () => {
+    // Evita pedido duplicado por clique duplo enquanto o envio anterior não terminou
+    if (enviandoPedido) return;
+
     if (carrinho.obterItens().length === 0) {
       alert('Seu carrinho está vazio. Adicione itens antes de enviar!');
       return;
@@ -1831,32 +1841,58 @@ export function initCarrinhoModal(config) {
       return;
     }
 
-    // Gerar Código do Pedido (TAREFA 2)
-    const codigoPedido = gerarCodigoPedido(new Date(), config.horario?.fusoHorario || 'America/Cuiaba');
+    enviandoPedido = true;
+    if (btnEnviar) btnEnviar.disabled = true;
+    if (btnEnviarLabel) btnEnviarLabel.textContent = 'Enviando pedido...';
 
     // Obter dados do formulário
     const dados = obterDadosFormulario();
-    dados.codigoPedido = codigoPedido;
+    chaveIdempotencia = chaveIdempotencia || `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    dados.idempotencyKey = chaveIdempotencia;
+    // O backend lê o cupom em "cupom"; a promoção do site é aplicada automaticamente
+    dados.cupom = dados.promocaoInfo?.ativa ? (dados.promocaoInfo.cupom || '') : '';
 
     // Salvar dados no localStorage para próximas compras (TAREFA 6)
     salvarDadosCliente(dados);
 
-    // Gerar link e abrir WhatsApp
-    const linkWhats = gerarLinkWhatsAppPedido(config, dados);
-    ultimoLinkWhatsGerado = linkWhats;
-
+    // O pedido só existe se o sistema registrar: sem resposta, o cliente tenta de novo
+    let resBackend;
     try {
-      window.open(linkWhats, '_blank', 'noopener,noreferrer');
-    } catch (e) {
-      console.warn('Erro ao abrir popup do WhatsApp:', e);
+      resBackend = await criarPedidoApi(dados);
+    } catch (errBackend) {
+      const semConexao = !errBackend.status;
+      alert(semConexao
+        ? 'Não conseguimos enviar seu pedido agora. Verifique sua internet e tente novamente.'
+        : `Não foi possível enviar o pedido: ${errBackend.message}`);
+      return;
+    } finally {
+      enviandoPedido = false;
+      if (btnEnviar) btnEnviar.disabled = false;
+      verificarStatusFuncionamento();
     }
 
+    const codigoPedido = resBackend.codigoPedido;
+    chaveIdempotencia = null;
+    registrarPedidoRecente({ codigo: codigoPedido, total: resBackend.total, modalidade: dados.modalidade });
+
     // Exibir Tela Pós-Envio (TAREFA 4)
+    telaPosEnvioAtiva = true;
+    carrinho.limparCarrinho();
+    if (avisoVazio) avisoVazio.style.display = 'none';
     if (conteudoAtivo) conteudoAtivo.style.display = 'none';
     if (footerModal) footerModal.style.display = 'none';
     if (telaPosEnvio) telaPosEnvio.style.display = 'block';
 
     if (posCodigoDisplay) posCodigoDisplay.textContent = codigoPedido;
+
+    // Botão de acompanhamento do pedido
+    const btnAcompanharRastreio = document.querySelector('#btn-acompanhar-rastreio');
+    if (btnAcompanharRastreio) {
+      btnAcompanharRastreio.onclick = () => {
+        fechar();
+        window.abrirModalRastreio?.(codigoPedido);
+      };
+    }
 
     const pixConfig = config.pagamento?.pix || {};
     if (dados.pagamento.forma === 'pix') {
@@ -1870,18 +1906,15 @@ export function initCarrinhoModal(config) {
       if (posOutrosMsg) {
         const tempoMsg = dados.modalidade === 'retirada'
           ? (config.operacional?.tempoRetirada || config.pagamento?.tempoMedioRetirada || '20 a 35 min')
-          : (config.pagamento?.tempoMedioEspera || '40 min');
-        posOutrosMsg.textContent = `Pedido enviado! A pizzaria vai confirmar em instantes. Tempo médio: ${tempoMsg}.`;
+          : (config.operacional?.tempoEntrega || config.pagamento?.tempoMedioEspera || '40 min');
+        posOutrosMsg.textContent = `A pizzaria vai conferir e confirmar seu pedido em instantes. Tempo médio após a confirmação: ${tempoMsg}.`;
       }
-    }
-
-    if (btnReabrirWhats) {
-      btnReabrirWhats.href = linkWhats;
     }
 
     // Rola para o topo do corpo do modal
     modalBody?.scrollTo({ top: 0, behavior: 'smooth' });
   });
+
 
   // Copiar Chave Pix com Fallback (TAREFA 4)
   btnCopiarPix?.addEventListener('click', async () => {
@@ -1923,9 +1956,10 @@ export function initCarrinhoModal(config) {
 
   // Botão Fazer Outro Pedido
   btnNovoPedido?.addEventListener('click', () => {
-    carrinho.limparCarrinho();
+    telaPosEnvioAtiva = false;
     if (telaPosEnvio) telaPosEnvio.style.display = 'none';
     fechar();
+    document.querySelector('#cardapio')?.scrollIntoView({ behavior: 'smooth' });
   });
 
   // Sincronização de eventos globais

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <radialGradient id="brasaoGold" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF0B3" />
+      <stop offset="60%" stop-color="#F7BA2A" />
+      <stop offset="100%" stop-color="#C48416" />
+    </radialGradient>
+    <linearGradient id="brasaoDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#231B16" />
+      <stop offset="100%" stop-color="#0C0A09" />
+    </linearGradient>
+    <path id="textCircleTop" d="M 40,150 A 110,110 0 1,1 260,150" fill="none" />
+    <path id="textCircleBottom" d="M 260,150 A 110,110 0 0,1 40,150" fill="none" />
+  </defs>
+
+  <!-- Outer background circle -->
+  <circle cx="150" cy="150" r="142" fill="url(#brasaoDark)" stroke="url(#brasaoGold)" stroke-width="2" />
+  <circle cx="150" cy="150" r="134" fill="none" stroke="url(#brasaoGold)" stroke-width="0.75" stroke-dasharray="3 2" />
+  <circle cx="150" cy="150" r="102" fill="none" stroke="url(#brasaoGold)" stroke-width="1.2" />
+
+  <!-- Circular Text -->
+  <text font-family="'Cinzel', 'Playfair Display', 'Cormorant Garamond', Georgia, serif" font-size="13" font-weight="600" fill="url(#brasaoGold)" letter-spacing="3.8">
+    <textPath href="#textCircleTop" startOffset="50%" text-anchor="middle">
+      DON CORLEONE
+    </textPath>
+  </text>
+  <text font-family="'Manrope', 'DM Sans', sans-serif" font-size="9" font-weight="600" fill="url(#brasaoGold)" letter-spacing="3">
+    <textPath href="#textCircleBottom" startOffset="50%" text-anchor="middle">
+      PIZZAS E ESFIHAS
+    </textPath>
+  </text>
+
+  <!-- Central Crest Ornament -->
+  <g transform="translate(150, 150)">
+    <!-- Olive wreath branches -->
+    <path d="M -50,15 C -45,35 -25,48 0,50 C 25,48 45,35 50,15" fill="none" stroke="url(#brasaoGold)" stroke-width="1.2" stroke-linecap="round" />
+    <path d="M -50,-15 C -45,-35 -25,-48 0,-50 C 25,-48 45,-35 50,-15" fill="none" stroke="url(#brasaoGold)" stroke-width="1.2" stroke-linecap="round" opacity="0.6" />
+    
+    <!-- Laurel Leaves -->
+    <path d="M -42,28 C -36,25 -32,29 -38,34 Z" fill="url(#brasaoGold)" />
+    <path d="M -26,42 C -20,38 -17,43 -22,48 Z" fill="url(#brasaoGold)" />
+    <path d="M 42,28 C 36,25 32,29 38,34 Z" fill="url(#brasaoGold)" />
+    <path d="M 26,42 C 20,38 17,43 22,48 Z" fill="url(#brasaoGold)" />
+    
+    <!-- Monogram DC -->
+    <text x="0" y="14" font-family="'Cinzel', 'Playfair Display', 'Cormorant Garamond', Georgia, serif" font-size="44" font-weight="700" fill="url(#brasaoGold)" text-anchor="middle" letter-spacing="2">DC</text>
+    
+    <!-- Stylized 8-pointed star at top center -->
+    <polygon points="0,-32 2.5,-25 9.5,-25 4,-20.5 6,-14 0,-18 -6,-14 -4,-20.5 -9.5,-25 -2.5,-25" fill="url(#brasaoGold)" />
+  </g>
+</svg>

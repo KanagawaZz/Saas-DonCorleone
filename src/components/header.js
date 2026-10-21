@@ -30,6 +30,8 @@ export function renderHeader(config) {
           <li><a href="#cardapio" class="nav-link">Cardápio</a></li>
           <li><a href="#como-pedir" class="nav-link">Como Pedir</a></li>
           <li><a href="#sobre" class="nav-link">Sobre</a></li>
+          <li><a href="#rastreio" class="nav-link" id="nav-link-rastreio">Rastrear Pedido</a></li>
+          <li><a href="#clube" class="nav-link" id="nav-link-clube" style="color: #C8A15A; font-weight: bold;">★ Clube VIP</a></li>
           <li><a href="#contato" class="nav-link">Contato</a></li>
         </ul>
       </nav>
@@ -47,10 +49,8 @@ export function renderHeader(config) {
         </button>
 
         <button type="button" class="btn btn--primary btn--header-order" id="btn-header-order">
-          <svg class="btn-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2zm.01 1.67c4.54 0 8.24 3.7 8.24 8.24 0 2.2-.86 4.27-2.42 5.82a8.196 8.196 0 0 1-5.82 2.41c-1.47 0-2.91-.39-4.18-1.15l-.3-.18-3.11.82.83-3.03-.2-.31a8.21 8.21 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24zm4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.24-.75-.67-1.25-1.5-1.4-1.75-.14-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.14.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.87.85-.87 2.08 0 1.23.89 2.42 1.02 2.59.13.17 1.76 2.69 4.27 3.77.6.26 1.06.41 1.43.53.6.19 1.15.16 1.58.1.48-.07 1.47-.6 1.68-1.18.21-.58.21-1.07.15-1.18-.06-.11-.22-.17-.47-.3z"/>
-          </svg>
-          <span class="btn-text-desktop">Pedir pelo WhatsApp</span>
+          ${icone('pizza', 18, 'btn-icon')}
+          <span class="btn-text-desktop">Fazer Pedido</span>
           <span class="btn-text-mobile">Pedir</span>
         </button>
 
@@ -70,12 +70,15 @@ export function renderHeader(config) {
         <li><a href="#montagem" class="mobile-nav-link">Início</a></li>
         <li><a href="#cardapio" class="mobile-nav-link">Cardápio</a></li>
         <li><a href="#como-pedir" class="mobile-nav-link">Como Pedir</a></li>
+        <li><a href="#rastreio" class="mobile-nav-link" id="drawer-link-rastreio">📍 Rastrear Pedido</a></li>
+        <li><a href="#clube" class="mobile-nav-link" id="drawer-link-clube" style="color: #C8A15A;">★ Clube VIP &amp; Promoções</a></li>
         <li><a href="#sobre" class="mobile-nav-link">Sobre</a></li>
         <li><a href="#contato" class="mobile-nav-link">Contato</a></li>
       </ul>
+
       <div class="mobile-drawer-footer">
         <button type="button" class="btn btn--primary w-full" id="btn-drawer-order">
-          Fazer Pedido no WhatsApp
+          Fazer Pedido
         </button>
         <button type="button" class="btn-instalar-app-drawer" id="btn-instalar-app-drawer" aria-label="Instalar App Don Corleone">
           ${icone('celular', 16)}
@@ -167,6 +170,32 @@ export function initHeader(config) {
   btnOrder?.addEventListener('click', abrirPedido);
   btnDrawerOrder?.addEventListener('click', abrirPedido);
 
+  // Abertura dos novos modais: Rastreio e Clube VIP
+  document.querySelectorAll('#nav-link-rastreio, #drawer-link-rastreio').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (drawer?.classList.contains('is-open')) {
+        toggleBtn?.classList.remove('is-open');
+        drawer.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+      // Sem código: o modal mostra os pedidos recentes deste aparelho e a busca por código
+      window.abrirModalRastreio?.();
+    });
+  });
+
+  document.querySelectorAll('#nav-link-clube, #drawer-link-clube').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (drawer?.classList.contains('is-open')) {
+        toggleBtn?.classList.remove('is-open');
+        drawer.classList.remove('is-open');
+        document.body.style.overflow = '';
+      }
+      window.abrirModalCliente?.();
+    });
+  });
+
   // Atualização do badge do carrinho
   window.addEventListener('carrinho-atualizado', (e) => {
     const total = e.detail?.quantidadeTotal || 0;
@@ -179,4 +208,5 @@ export function initHeader(config) {
       }
     }
   });
+
 }

@@ -1,0 +1,10 @@
+{% extends "entregador/base.html" %}
+{% load static %}
+{% block title %}Acesso{% endblock %}
+{% block content %}
+  <div class="courier-empty">
+    <img src="{% static 'painel/brasao.svg' %}" alt="" width="64" height="64">
+    <h1>Link inválido ou expirado</h1>
+    <p class="muted">Peça ao gerente da pizzaria para enviar de novo o seu link de acesso ao app do entregador.</p>
+  </div>
+{% endblock %}

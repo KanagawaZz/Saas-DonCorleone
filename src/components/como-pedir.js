@@ -15,8 +15,8 @@ export function renderComoPedir(config) {
     },
     {
       numero: "03",
-      titulo: "Envie pelo WhatsApp",
-      descricao: "Confira o resumo e envie o pedido diretamente para a pizzaria."
+      titulo: "Envie e acompanhe",
+      descricao: "Confira o resumo, envie e acompanhe o pedido aqui no site."
     }
   ];
 
@@ -49,7 +49,7 @@ export function renderComoPedir(config) {
 
       <div class="como-pedir-nota text-center mt-8">
         <p class="text-muted text-sm">
-          ${esc(dados.nota || 'O pedido será encaminhado pelo WhatsApp e a confirmação final depende do atendimento da pizzaria.')}
+          ${esc(dados.nota || 'Dúvidas? Fale com a gente no WhatsApp. Avisamos por lá quando seu pedido sair para entrega.')}
         </p>
       </div>
     </div>

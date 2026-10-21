@@ -4,6 +4,7 @@ import { siteConfig } from './data/site.config.js';
 import dadosCardapio from './data/cardapio.json';
 import dadosDepoimentos from './data/depoimentos.json';
 
+import { carregarDadosDoBanco } from './api/dados-site.js';
 import { inicializarMotion } from './utils/motion.js';
 import { inicializarPWA } from './utils/pwa.js';
 
@@ -23,6 +24,8 @@ import { renderDepoimentos, initDepoimentos } from './components/depoimentos.js'
 import { renderContato, initContato } from './components/contato.js';
 import { renderFooter, initFooter } from './components/footer.js';
 import { renderBarraPedido, initBarraPedido } from './components/barra-pedido.js';
+import { renderRastreioModal, initRastreioModal } from './components/rastreio-modal.js';
+import { renderClienteModal, initClienteModal } from './components/cliente-modal.js';
 
 function montarAplicacao() {
   const app = document.querySelector('#app');
@@ -47,6 +50,8 @@ function montarAplicacao() {
     ${renderBarraPedido(siteConfig)}
     ${renderPizzaCustomizerModal(siteConfig)}
     ${renderCarrinhoModal(siteConfig)}
+    ${renderRastreioModal()}
+    ${renderClienteModal()}
   `;
 
   app.innerHTML = html;
@@ -62,6 +67,8 @@ function montarAplicacao() {
   initCardapio(siteConfig, dadosCardapio);
   initPizzaCustomizerModal(siteConfig);
   initCarrinhoModal(siteConfig);
+  initRastreioModal(siteConfig);
+  initClienteModal();
   initComoPedir(siteConfig);
   initSobre(siteConfig);
   initGaleria(siteConfig);
@@ -72,9 +79,19 @@ function montarAplicacao() {
   inicializarPWA();
 }
 
+
+// Busca cardápio, taxas, horários e promoção do painel antes de montar a página
+// (com os arquivos locais como reserva se o backend não responder)
+const dadosProntos = carregarDadosDoBanco();
+
+async function iniciar() {
+  await dadosProntos;
+  montarAplicacao();
+}
+
 // Inicializa quando o DOM estiver pronto
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', montarAplicacao);
+  document.addEventListener('DOMContentLoaded', iniciar);
 } else {
-  montarAplicacao();
+  iniciar();
 }

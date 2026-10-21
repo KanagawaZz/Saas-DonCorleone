@@ -1,0 +1,83 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}{{ funcionario.name }}{% endblock %}
+{% block heading %}{{ funcionario.name }}{% endblock %}
+{% block actions %}
+  {% if funcionario.role == 'entregador' %}<a class="btn btn-sm" href="{% url 'painel:entregador' funcionario.pk %}">Ver entregas</a>{% endif %}
+{% endblock %}
+{% block content %}
+  <p><a href="{% url 'painel:funcionarios' %}">← Funcionários e vales</a></p>
+
+  <div class="grid grid-2">
+    <section class="panel">
+      <div class="panel-head"><h2>Vales por mês</h2></div>
+      {% if por_mes %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Mês</th><th class="right">Vales</th><th class="right">Total</th></tr></thead>
+            <tbody>
+              {% for m in por_mes %}
+                <tr>
+                  <td><a href="{% url 'painel:funcionarios' %}?mes={{ m.mes|date:'Y-m' }}">{{ m.label|capfirst }}</a></td>
+                  <td class="right num">{{ m.qtd }}</td>
+                  <td class="right num"><strong>{{ m.total|brl }}</strong></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty"><strong>Nenhum vale</strong>{{ funcionario.name }} ainda não pegou vale.</div>
+      {% endif %}
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Cadastro</h2></div>
+      <form method="post" class="panel-body grid">
+        {% csrf_token %}
+        {% include "painel/_campo.html" with field=form.name %}
+        {% include "painel/_campo.html" with field=form.role %}
+        {% include "painel/_campo.html" with field=form.phone %}
+        {% include "painel/_campo.html" with field=form.is_active %}
+        <p class="muted small">Quem sai da equipe some das listas e do lançamento de vales, mas o histórico fica guardado.</p>
+        <div class="form-actions"><button type="submit" class="btn btn-primary">Salvar</button></div>
+      </form>
+      <form method="post" action="{% url 'painel:funcionario_excluir' funcionario.pk %}" class="panel-body" style="padding-top:0">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-sm btn-ghost" data-confirm="Remover {{ funcionario.name }}? Só é possível se não tiver vales nem entregas.">Remover funcionário</button>
+      </form>
+    </section>
+  </div>
+
+  {% if funcionario.role == 'entregador' and funcionario.is_active %}
+    {% include "painel/entregadores/_acesso_app.html" with entregador=funcionario %}
+  {% endif %}
+
+  {% if vales %}
+    <section class="panel">
+      <div class="panel-head"><h2>Últimos vales</h2></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Data</th><th>Observação</th><th class="hide-mobile">Lançado por</th><th class="right">Valor</th><th></th></tr></thead>
+          <tbody>
+            {% for v in vales %}
+              <tr>
+                <td class="nowrap">{{ v.date|date:"d/m/Y" }}</td>
+                <td>{{ v.notes|default:"—" }}</td>
+                <td class="hide-mobile">{{ v.created_by.get_full_name|default:v.created_by.username|default:"—" }}</td>
+                <td class="right num">{{ v.amount|brl }}</td>
+                <td class="right">
+                  <form method="post" action="{% url 'painel:vale_excluir' v.pk %}" data-confirm="Excluir o vale de {{ v.amount|brl }} de {{ v.date|date:'d/m' }}?">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <button type="submit" class="btn btn-sm btn-ghost">Excluir</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

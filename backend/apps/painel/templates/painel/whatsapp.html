@@ -1,0 +1,93 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}WhatsApp{% endblock %}
+{% block heading %}Conectar WhatsApp{% endblock %}
+{% block content %}
+<div class="grid wa-page">
+
+  <section class="panel wa-status is-{{ estado }}" aria-live="polite">
+    <span class="wa-dot" aria-hidden="true"></span>
+    <div>
+      <p><strong>Status: {{ estado_texto }}</strong></p>
+      <p class="muted small">Instância: <code>{{ instancia }}</code>{% if perfil.numero %} · Número: {{ perfil.numero|telefone }}{% endif %}{% if perfil.nome %} · {{ perfil.nome }}{% endif %}</p>
+    </div>
+  </section>
+
+  {% if not configurado %}
+    <div class="alert alert-aviso">
+      A Evolution API não está configurada. Suba o container com <code>docker compose up -d</code> e preencha <code>EVOLUTION_API_KEY</code> no arquivo <code>.env</code> da raiz do projeto. Depois reinicie o servidor do painel.
+    </div>
+  {% endif %}
+
+  {% if erro %}
+    <div class="alert alert-error">{{ erro }}</div>
+  {% endif %}
+
+  {% if qr %}
+    <section class="panel" data-wa-qr data-estado-url="{% url 'painel:whatsapp_estado' %}">
+      <div class="panel-head"><h2>Escaneie o QR Code</h2><span class="muted small" data-wa-qr-aviso>O código é renovado sozinho a cada 30 segundos.</span></div>
+      <div class="panel-body wa-qr-body">
+        <img class="wa-qr" src="{{ qr }}" alt="QR Code para conectar o WhatsApp" width="264" height="264" data-wa-qr-img>
+        <ol class="wa-passos">
+          <li>Abra o WhatsApp da pizzaria no celular.</li>
+          <li>Toque em <strong>Mais opções</strong> (⋮) ou <strong>Configurações</strong> e depois em <strong>Aparelhos conectados</strong>.</li>
+          <li>Toque em <strong>Conectar um aparelho</strong> e aponte a câmera para este código.</li>
+          <li>Esta página atualiza sozinha quando a conexão for feita.</li>
+        </ol>
+      </div>
+    </section>
+  {% elif configurado and estado != 'open' %}
+    <section class="panel">
+      <div class="panel-head"><h2>Conectar instância do WhatsApp</h2></div>
+      <div class="panel-body">
+        <p class="muted small">Crie ou reconecte a instância aqui mesmo. Se a conexão cair no futuro, é só voltar nesta tela e gerar um novo QR Code.</p>
+        <form method="post" action="{% url 'painel:whatsapp_conectar' %}" class="wa-form">
+          {% csrf_token %}
+          <div class="field">
+            <label for="wa-instancia">Nome da instância</label>
+            <input type="text" id="wa-instancia" name="instancia" value="{{ instancia }}" required pattern="[a-z0-9_\-]+" autocomplete="off" spellcheck="false">
+            <span class="help">Identificador da pizzaria no serviço de WhatsApp. Use letras minúsculas, números e hífen.</span>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            {% if estado == 'missing' %}Criar e gerar QR Code{% else %}Reconectar / Gerar QR Code{% endif %}
+          </button>
+        </form>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if estado == 'open' %}
+    <section class="panel">
+      <div class="panel-head"><h2>Enviar mensagem de teste</h2></div>
+      <div class="panel-body">
+        <form method="post" action="{% url 'painel:whatsapp_teste' %}" class="wa-form">
+          {% csrf_token %}
+          <div class="field">
+            <label for="wa-teste">Número com DDD</label>
+            <input type="tel" id="wa-teste" name="telefone" placeholder="(65) 99999-0000" required>
+          </div>
+          <button type="submit" class="btn">Enviar teste</button>
+        </form>
+      </div>
+    </section>
+
+    <form method="post" action="{% url 'painel:whatsapp_desconectar' %}" data-confirm="Desconectar o WhatsApp? Os avisos automáticos de pedido param até conectar de novo.">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger btn-sm">Desconectar WhatsApp</button>
+    </form>
+  {% endif %}
+
+  <section class="panel">
+    <div class="panel-head"><h2>O que é enviado automaticamente</h2></div>
+    <div class="panel-body">
+      <ul class="wa-lista muted small">
+        <li><strong>Saiu para entrega:</strong> o cliente recebe o aviso com o link para acompanhar o pedido.</li>
+        <li><strong>Pronto para retirada:</strong> o cliente recebe o aviso com o endereço do balcão.</li>
+        <li>Os pedidos em si não passam pelo WhatsApp: o cliente envia pelo site e a pizzaria confirma no painel.</li>
+      </ul>
+      <p class="muted small wa-seguranca">A chave mestra da Evolution API fica só nas variáveis de ambiente do servidor ({{ api_url }}) e nunca aparece no site.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,144 @@
+{% extends "entregador/base.html" %}
+{% load painel static %}
+{% block title %}Minhas entregas{% endblock %}
+{% block manifest %}<link rel="manifest" href="{% url 'entregador:manifest' %}">{% endblock %}
+{% block content %}
+  <header class="courier-head">
+    <img src="{% static 'painel/brasao.svg' %}" alt="" width="36" height="36">
+    <div>
+      <div class="brand-name">Don Corleone</div>
+      <div class="muted small">Olá, {{ entregador.name }}</div>
+    </div>
+  </header>
+
+  <section class="courier-card shift {% if em_servico %}is-on{% endif %}">
+    <div>
+      <strong>{% if em_servico %}Em serviço{% else %}Fora de serviço{% endif %}</strong>
+      <div class="small muted">
+        {% if not em_servico %}
+          Inicie o serviço quando chegar na pizzaria.
+        {% elif rastreando %}
+          {% if sem_sinal %}<span class="warn">Sem sinal do Traccar. Abra o app Traccar Client e confira se está ligado.</span>
+          {% else %}Última localização {{ localizacao.recorded_at|tempo_desde }}. O Traccar envia quando você se move.{% endif %}
+        {% else %}
+          Fora do horário da loja: sua localização não é registrada.
+        {% endif %}
+      </div>
+    </div>
+    <form method="post" action="{% url 'entregador:servico' %}" {% if em_servico %}data-confirm="Encerrar o serviço de hoje?"{% endif %}>
+      {% csrf_token %}
+      <button type="submit" class="btn {% if em_servico %}btn-ghost{% else %}btn-primary{% endif %}">{% if em_servico %}Encerrar{% else %}Iniciar serviço{% endif %}</button>
+    </form>
+  </section>
+  {% if em_servico and sem_sinal and entregador.traccar_connected_at %}
+    <a class="btn btn-primary btn-block traccar-link" href="{{ traccar_start_link }}">Ligar o rastreamento no Traccar</a>
+    <p class="small muted center" style="margin-top:-10px">Se o Traccar já estiver ligado, não precisa: a localização aparece quando você começar a andar.</p>
+  {% elif em_servico and sem_sinal %}
+    <section class="courier-card connect">
+      <strong>Conecte o Traccar para a pizzaria ver onde você está</strong>
+      <span class="small muted">Precisa ter o app <strong>Traccar Client</strong> instalado (gratuito na App Store e na Play Store).</span>
+      <a class="btn btn-primary btn-block" href="{{ traccar_config_link }}">1. Configurar o Traccar</a>
+      <span class="small muted">O Traccar abre e pergunta "Aplicar nova configuração?": toque em <strong>OK</strong>. Na primeira vez, permita a localização <strong>"Sempre"</strong>. Depois volte aqui.</span>
+      <a class="btn btn-block" href="{{ traccar_start_link }}">2. Ligar o rastreamento</a>
+      <span class="small muted">Quando aparecer "Última localização agora" no topo, está tudo certo.</span>
+    </section>
+  {% elif not em_servico %}
+    <a class="btn btn-ghost btn-block traccar-link" href="{{ traccar_stop_link }}">Desligar o rastreamento no Traccar</a>
+  {% endif %}
+
+  <section>
+    <h2 class="courier-title">Na bag <span class="muted">· {{ bag|length }}</span></h2>
+    {% for p in bag %}
+      <article class="courier-card delivery">
+        <div class="delivery-top">
+          <strong>#{{ p.readable_code }}</strong>
+          <span class="muted small">saiu {{ p.updated_at|tempo_desde }}</span>
+        </div>
+        <div class="delivery-customer">{{ p.customer_name }}</div>
+        <address>
+          {{ p.delivery_street|default:"Endereço não informado" }}{% if p.delivery_number %}, {{ p.delivery_number }}{% endif %}
+          {% if p.delivery_complement %}<br>{{ p.delivery_complement }}{% endif %}
+          <br>{{ p.delivery_neighborhood }}{% if p.delivery_city %} · {{ p.delivery_city }}{% endif %}
+          {% if p.delivery_reference %}<br><span class="muted">Ref.: {{ p.delivery_reference }}</span>{% endif %}
+        </address>
+        {% if p.payment_method == 'pix' %}
+          <div class="pay is-paid">Pago no PIX: não cobrar</div>
+        {% else %}
+          <div class="pay">
+            Cobrar <strong>{{ p.total_amount|brl }}</strong> · {{ p.get_payment_method_display }}
+            {% if p.needs_change and p.change_for %}<br>Troco para {{ p.change_for|brl }}: levar <strong>{{ p.calculated_change|brl }}</strong>{% endif %}
+          </div>
+        {% endif %}
+        <div class="delivery-actions">
+          <a class="btn" href="{{ p|link_google_maps }}" target="_blank" rel="noopener">Google Maps</a>
+          <a class="btn" href="{{ p|link_waze }}" target="_blank" rel="noopener">Waze</a>
+          <a class="btn" href="{{ p.customer_phone|whatsapp_link }}" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn" href="tel:{{ p.customer_phone }}">Ligar</a>
+        </div>
+        <form method="post" action="{% url 'entregador:entregue' p.pk %}" data-confirm="Confirmar que o pedido #{{ p.readable_code }} foi entregue?">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary btn-block">Entregue</button>
+        </form>
+      </article>
+    {% empty %}
+      <div class="courier-card muted">Nenhuma entrega com você agora. Quando a pizzaria liberar um pedido no seu nome, ele aparece aqui.</div>
+    {% endfor %}
+  </section>
+
+  <section>
+    <h2 class="courier-title">Hoje</h2>
+    <div class="courier-stats">
+      <div class="courier-card"><span class="muted small">Entregas</span><strong class="num">{{ entregues_hoje|length }}</strong></div>
+      <div class="courier-card"><span class="muted small">Taxas</span><strong class="num">{{ taxas_hoje|brl }}</strong></div>
+      <div class="courier-card"><span class="muted small">Vales no mês</span><strong class="num">{{ vales_mes|brl }}</strong></div>
+    </div>
+    {% if entregues_hoje %}
+      <div class="courier-card list">
+        {% for p in entregues_hoje %}
+          <div class="list-row"><span>#{{ p.readable_code|slice:"-3:" }} · {{ p.delivery_neighborhood|default:"—" }}</span><span class="num">{{ p.delivery_fee|brl }}</span></div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </section>
+
+  <details class="courier-card setup">
+    <summary><strong>Configurar o Traccar Client</strong> (localização)</summary>
+    <ol class="small">
+      <li>Instale o app <strong>Traccar Client</strong> na Play Store ou App Store (é gratuito).</li>
+      <li>Toque no botão abaixo e confirme com <strong>OK</strong> no Traccar ("Aplicar nova configuração?"):
+        <a class="btn btn-primary btn-block" style="margin-top:8px" href="{{ traccar_config_link }}">Configurar o Traccar automaticamente</a>
+      </li>
+      <li>Permita a localização <strong>"Sempre"</strong> e, no Android, deixe o app sem restrição de bateria.</li>
+      <li>Ligue o <strong>Rastreamento contínuo</strong>.</li>
+    </ol>
+    <details class="small">
+      <summary>Configurar à mão</summary>
+      <p style="margin-top:6px">URL do servidor:<br><code data-copy>{{ traccar_url }}</code></p>
+      <p style="margin-top:6px">Identificador do dispositivo:<br><code data-copy>{{ entregador.access_token }}</code></p>
+      <p style="margin-top:6px">Precisão: <strong>Alta</strong> · Distância: <strong>50</strong> · Intervalo: <strong>120</strong> · Buffer offline: <strong>ligado</strong>.</p>
+    </details>
+    <p class="small muted">Privacidade: a pizzaria só registra sua localização quando você está em serviço e no horário da loja (ou com entrega na bag). Fica guardada só a última posição, e ela é apagada quando você encerra o serviço.</p>
+  </details>
+
+  <p class="small muted center">Para instalar: no menu do navegador, toque em <strong>Adicionar à tela inicial</strong>.</p>
+{% endblock %}
+{% block scripts %}
+  <script>
+    (function () {
+      'use strict';
+      document.addEventListener('submit', (e) => {
+        const message = e.target.dataset.confirm;
+        if (message && !window.confirm(message)) e.preventDefault();
+      });
+      document.querySelectorAll('[data-copy]').forEach((el) => {
+        el.addEventListener('click', async () => {
+          try { await navigator.clipboard.writeText(el.textContent.trim()); el.dataset.copiado = '1'; setTimeout(() => { el.dataset.copiado = ''; }, 1500); } catch (err) { /* sem permissão */ }
+        });
+      });
+      // Novos pedidos na bag aparecem sozinhos
+      setInterval(() => { if (!document.hidden && !document.querySelector('details[open]')) window.location.reload(); }, 45000);
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('{% url "entregador:sw" %}', { scope: '{% url "entregador:app" %}' }).catch(() => {});
+      document.querySelectorAll('.messages .alert').forEach((el) => setTimeout(() => el.remove(), 6000));
+    })();
+  </script>
+{% endblock %}

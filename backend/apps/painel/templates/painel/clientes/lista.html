@@ -1,0 +1,87 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Clientes{% endblock %}
+{% block heading %}Clientes{% endblock %}
+{% block actions %}
+  <nav class="segmented" aria-label="Lista de clientes">
+    <a href="?aba=todos" {% if aba != 'vip' %}aria-current="true"{% endif %}>Quem já pediu</a>
+    <a href="?aba=vip" {% if aba == 'vip' %}aria-current="true"{% endif %}>Clube VIP ({{ qtd_cadastrados }})</a>
+  </nav>
+{% endblock %}
+{% block content %}
+  {% if aba == 'vip' %}
+    <section class="panel">
+      <div class="panel-head">
+        <h2>{{ qtd_cadastrados }} cadastrado{{ qtd_cadastrados|pluralize }} no Clube VIP</h2>
+        <span class="muted small">{{ qtd_vip }} marcado{{ qtd_vip|pluralize }} como VIP</span>
+      </div>
+      {% if cadastrados %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>WhatsApp</th><th class="hide-mobile">Bairro</th><th>Pedidos concluídos</th><th class="right">Total concluído</th><th>VIP</th></tr></thead>
+            <tbody>
+              {% for c in cadastrados %}
+                <tr>
+                  <td><a class="row-link" href="{% url 'painel:cliente' c.whatsapp %}">{{ c.user.get_full_name|default:c.user.username }}</a></td>
+                  <td class="nowrap">{{ c.whatsapp|telefone }}</td>
+                  <td class="hide-mobile">{{ c.default_address_neighborhood|default:"—" }}</td>
+                  <td class="num">{{ c.total_orders_count }}</td>
+                  <td class="right num">{{ c.total_spent|brl }}</td>
+                  <td>{% if c.is_vip %}<span class="tag tag-gold">VIP</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty"><strong>Ninguém se cadastrou ainda</strong>Clientes entram no Clube VIP pelo botão "★ Clube VIP" do site.</div>
+      {% endif %}
+    </section>
+  {% else %}
+    <form class="panel panel-body filters" method="get" role="search">
+      <input type="hidden" name="aba" value="todos">
+      <div class="field" style="flex:1 1 260px">
+        <label for="f-busca">Buscar</label>
+        <input type="search" id="f-busca" name="busca" value="{{ busca }}" placeholder="Nome ou WhatsApp">
+      </div>
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+        {% if busca %}<a class="btn btn-ghost" href="{% url 'painel:clientes' %}">Limpar</a>{% endif %}
+      </div>
+    </form>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>{{ pagina.paginator.count }} cliente{{ pagina.paginator.count|pluralize }}</h2>
+        <span class="muted small">Agrupados pelo WhatsApp informado nos pedidos (cancelados não contam).</span>
+      </div>
+      {% if pagina.object_list %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>WhatsApp</th><th>Pedidos</th><th class="right">Valor registrado</th><th class="hide-mobile">Último pedido</th></tr></thead>
+            <tbody>
+              {% for c in pagina %}
+                <tr>
+                  <td><a class="row-link" href="{% url 'painel:cliente' c.customer_phone %}">{{ c.nome|default:"(sem nome)" }}</a> {% if c.perfil %}<span class="tag tag-gold">{% if c.perfil.is_vip %}VIP{% else %}Clube{% endif %}</span>{% endif %}</td>
+                  <td class="nowrap">{{ c.customer_phone|telefone }}</td>
+                  <td class="num">{{ c.pedidos }}</td>
+                  <td class="right num">{{ c.total|brl }}</td>
+                  <td class="hide-mobile nowrap muted">{{ c.ultimo|date:"d/m/Y" }} · {{ c.ultimo|tempo_desde }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if pagina.paginator.num_pages > 1 %}
+          <nav class="pagination" aria-label="Páginas">
+            {% if pagina.has_previous %}<a class="btn btn-sm" href="{% query_com pagina=pagina.previous_page_number %}">Anterior</a>{% endif %}
+            <span class="muted">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+            {% if pagina.has_next %}<a class="btn btn-sm" href="{% query_com pagina=pagina.next_page_number %}">Próxima</a>{% endif %}
+          </nav>
+        {% endif %}
+      {% else %}
+        <div class="empty"><strong>Nenhum cliente encontrado</strong>Os clientes aparecem aqui a partir do primeiro pedido pelo site.</div>
+      {% endif %}
+    </section>
+  {% endif %}
+{% endblock %}

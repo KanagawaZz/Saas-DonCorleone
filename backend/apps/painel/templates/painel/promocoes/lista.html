@@ -1,0 +1,53 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Promoções{% endblock %}
+{% block heading %}Promoções e cupons{% endblock %}
+{% block actions %}
+  <a class="btn btn-primary btn-sm" href="{% url 'painel:promocao_nova' %}">+ Nova promoção</a>
+{% endblock %}
+{% block content %}
+  <div class="callout">
+    A promoção com <strong>"Faixa no site"</strong> aparece no topo do site e o desconto vale automaticamente em todo pedido enquanto estiver válida (se houver mais de uma, vale a mais recente).
+    O site ainda não tem campo para o cliente digitar cupom: os demais cupons só funcionam por integrações que chamem a API.
+    Se um cupom não valer no pedido (vencido, fora do dia, limite atingido), o pedido chega <strong>sem desconto</strong> e com um aviso nas observações.
+  </div>
+
+  <section class="panel">
+    {% if promocoes %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Campanha</th><th>Cupom</th><th>Desconto</th><th class="hide-mobile">Regras</th><th class="hide-mobile">Usos</th><th>Situação</th><th></th></tr></thead>
+          <tbody>
+            {% for p in promocoes %}
+              <tr {% if not p.is_active %}class="is-off"{% endif %}>
+                <td><a class="row-link" href="{% url 'painel:promocao' p.pk %}">{{ p.title }}</a>{% if p.show_top_banner %} <span class="tag tag-gold">Faixa no site</span>{% endif %}</td>
+                <td>{% if p.coupon_code %}<code>{{ p.coupon_code }}</code>{% else %}<span class="muted">—</span>{% endif %}</td>
+                <td class="nowrap num">{% if p.discount_type == 'percentage' %}{{ p.discount_value|floatformat:"-2" }}%{% else %}{{ p.discount_value|brl }}{% endif %}</td>
+                <td class="hide-mobile small">
+                  {{ p.dias }}
+                  {% if p.min_order_value %}· mín. {{ p.min_order_value|brl }}{% endif %}
+                  {% if p.registered_customers_only %}· só Clube VIP{% endif %}
+                  {% if p.start_date or p.end_date %}· {{ p.start_date|date:"d/m"|default:"…" }} a {{ p.end_date|date:"d/m/Y"|default:"…" }}{% endif %}
+                </td>
+                <td class="hide-mobile num">{{ p.current_uses }}{% if p.max_uses %} / {{ p.max_uses }}{% endif %}</td>
+                <td>
+                  {% if not p.is_active %}<span class="tag">Pausada</span>
+                  {% elif p.valida_agora %}<span class="tag tag-green">Valendo agora</span>
+                  {% else %}<span class="tag tag-warn" title="{{ p.motivo }}">{{ p.motivo|truncatechars:34 }}</span>{% endif %}
+                </td>
+                <td class="right">
+                  <form method="post" action="{% url 'painel:promocao_ativa' p.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-ghost">{% if p.is_active %}Pausar{% else %}Ativar{% endif %}</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="empty"><strong>Nenhuma promoção cadastrada</strong>Crie um cupom como "TERCA10" para 10% de desconto às terças, por exemplo.</div>
+    {% endif %}
+  </section>
+{% endblock %}

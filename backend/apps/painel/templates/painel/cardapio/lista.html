@@ -1,0 +1,71 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Cardápio{% endblock %}
+{% block heading %}Cardápio{% endblock %}
+{% block actions %}
+  {% include "painel/cardapio/_abas.html" with aba="produtos" %}
+  <a class="btn btn-primary btn-sm" href="{% url 'painel:produto_novo' %}">+ Novo produto</a>
+{% endblock %}
+{% block content %}
+  <form class="panel panel-body filters" method="get" role="search">
+    <div class="field" style="flex:2 1 220px">
+      <label for="f-busca">Buscar</label>
+      <input type="search" id="f-busca" name="busca" value="{{ filtros.busca }}" placeholder="Nome ou ingrediente">
+    </div>
+    <div class="field" style="flex:1 1 180px">
+      <label for="f-cat">Categoria</label>
+      <select id="f-cat" name="categoria">
+        <option value="">Todas</option>
+        {% for c in categorias %}<option value="{{ c.slug }}" {% if c.slug == filtros.categoria %}selected{% endif %}>{{ c.name }}{% if not c.is_active %} (oculta){% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    <label class="check" style="padding-bottom:8px"><input type="checkbox" name="esgotados" value="1" {% if filtros.esgotados %}checked{% endif %}> Só esgotados ({{ qtd_esgotados }})</label>
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <a class="btn btn-ghost" href="{% url 'painel:cardapio' %}">Limpar</a>
+    </div>
+  </form>
+
+  <p class="muted small">"Disponível" desligado = esgotado: o produto some do site na hora e o servidor recusa pedidos com ele. Mudanças de preço valem para o site e para o cálculo dos pedidos imediatamente.</p>
+
+  {% for grupo in grupos %}
+    <section class="panel">
+      <div class="panel-head">
+        <h2>{{ grupo.categoria.name }} {% if not grupo.categoria.is_active %}<span class="tag">{% if grupo.categoria.slug == 'compre-junto' %}só no carrinho{% else %}oculta no site{% endif %}</span>{% endif %}</h2>
+        <span class="muted small">{{ grupo.produtos|length }} ite{{ grupo.produtos|length|pluralize:"m,ns" }}</span>
+      </div>
+      {% for p in grupo.produtos %}
+        <div class="product-row {% if not p.is_available %}is-off{% endif %}">
+          {% with foto=p|foto_url %}
+            {% if foto %}<img class="thumb" src="{{ foto }}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">{% else %}<span class="thumb" aria-hidden="true"></span>{% endif %}
+          {% endwith %}
+          <div style="min-width:0">
+            <a class="product-name row-link" href="{% url 'painel:produto' p.pk %}">{{ p.name }}</a>
+            {% if p.tag %}<span class="tag tag-gold">{{ p.tag }}</span>{% endif %}
+            {% if p.product_type == 'pizza' and p.price_category == 'premium' %}<span class="tag">Premium</span>{% endif %}
+            <p class="muted small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.description }}</p>
+          </div>
+          <div class="product-prices">
+            {% if p.product_type == 'pizza' %}
+              {% for s in p.precos_tamanho %}<span class="price-chip" title="{{ s.size_name }}">{{ s.size_id|slice:":1"|upper }} {{ s.price|brl }}</span>{% empty %}<span class="tag tag-red">Sem preços</span>{% endfor %}
+            {% elif p.base_price is not None %}
+              <span class="price-chip">{{ p.base_price|brl }}</span>
+            {% else %}
+              <span class="tag tag-warn">Sob consulta</span>
+            {% endif %}
+          </div>
+          <div class="product-actions btn-row">
+            <form class="switch-form" method="post" action="{% url 'painel:produto_disponibilidade' p.pk %}">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              <button type="submit" class="switch {% if p.is_available %}is-on{% endif %}" aria-pressed="{{ p.is_available|yesno:'true,false' }}" title="{% if p.is_available %}Clique para marcar como esgotado{% else %}Clique para voltar ao cardápio{% endif %}">{% if p.is_available %}Disponível{% else %}Esgotado{% endif %}</button>
+            </form>
+            <a class="btn btn-sm btn-ghost" href="{% url 'painel:produto' p.pk %}">Editar</a>
+          </div>
+        </div>
+      {% endfor %}
+    </section>
+  {% empty %}
+    <section class="panel"><div class="empty"><strong>Nenhum produto encontrado</strong>Ajuste os filtros ou cadastre um novo produto.</div></section>
+  {% endfor %}
+{% endblock %}

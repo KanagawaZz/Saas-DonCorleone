@@ -1,0 +1,149 @@
+/* ==========================================================================
+   ESTILOS DO MODAL DE CADASTRO E LOGIN DE CLIENTES (VIP / PROMOÇÕES)
+   Don Corleone — Cantina & Pizzaria
+   ========================================================================== */
+
+.cliente-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 9, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  padding: 16px;
+}
+
+.cliente-modal-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.cliente-modal-container {
+  width: 100%;
+  max-width: 480px;
+  background: #141210;
+  border: 1px solid rgba(184, 134, 11, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  color: #F5EBE1;
+  font-family: var(--font-body, 'Manrope', sans-serif);
+}
+
+.cliente-modal-header {
+  padding: 18px 20px;
+  background: linear-gradient(180deg, #1C1916 0%, #141210 100%);
+  border-bottom: 1px solid rgba(184, 134, 11, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cliente-modal-header h3 {
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 1.15rem;
+  color: #C8A15A;
+  margin: 0;
+}
+
+.cliente-modal-tabs {
+  display: flex;
+  background: #181512;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cliente-tab-btn {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #A89F91;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cliente-tab-btn.active {
+  color: #C8A15A;
+  border-bottom-color: #C8A15A;
+  background: rgba(200, 161, 90, 0.05);
+}
+
+.cliente-modal-body {
+  padding: 20px;
+}
+
+.cliente-form-group {
+  margin-bottom: 14px;
+}
+
+.cliente-form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #C8BCAC;
+  margin-bottom: 6px;
+}
+
+.cliente-input {
+  width: 100%;
+  padding: 10px 14px;
+  background: #1F1B18;
+  border: 1px solid rgba(200, 161, 90, 0.25);
+  border-radius: 8px;
+  color: #FFF;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.cliente-input:focus {
+  border-color: #C8A15A;
+}
+
+.cliente-btn-submit {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
+  color: #0C0A09;
+  border: none;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: opacity 0.2s;
+}
+
+.cliente-btn-submit:hover {
+  opacity: 0.9;
+}
+
+.cliente-alerta {
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+  display: none;
+}
+
+.cliente-alerta.erro {
+  background: rgba(230, 57, 70, 0.15);
+  border: 1px solid #E63946;
+  color: #FFB3BA;
+}
+
+.cliente-alerta.sucesso {
+  background: rgba(82, 183, 136, 0.15);
+  border: 1px solid #52B788;
+  color: #A3E4D7;
+}

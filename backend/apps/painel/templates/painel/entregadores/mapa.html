@@ -1,0 +1,19 @@
+{% extends "painel/base.html" %}
+{% block title %}Mapa dos entregadores{% endblock %}
+{% block heading %}Mapa ao vivo{% endblock %}
+{% block actions %}<a class="btn btn-sm" href="{% url 'painel:entregadores' %}">Entregadores</a>{% endblock %}
+{% block content %}
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <div class="map-layout" data-mapa data-posicoes-url="{% url 'painel:mapa_posicoes' %}">
+    <section class="panel map-panel">
+      <div id="mapa" class="map" role="img" aria-label="Mapa com a posição dos entregadores em serviço"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Em serviço hoje</h2><span class="muted small" data-mapa-hora></span></div>
+      <div class="panel-body map-list" data-mapa-lista><p class="muted small">Carregando...</p></div>
+    </section>
+  </div>
+  <noscript><div class="alert alert-warning">O mapa precisa de JavaScript.</div></noscript>
+  <p class="muted small">Atualiza sozinho a cada 10 segundos. A posição vem do app Traccar Client no celular de cada entregador e só é registrada com ele em serviço, no horário da loja ou com entrega na bag.</p>
+{% endblock %}
+{% block extra_scripts %}<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js" defer></script>{% endblock %}

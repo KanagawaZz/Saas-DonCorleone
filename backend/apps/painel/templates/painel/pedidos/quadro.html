@@ -1,0 +1,12 @@
+{% extends "painel/base.html" %}
+{% block title %}Pedidos{% endblock %}
+{% block heading %}Pedidos em andamento{% endblock %}
+{% block actions %}
+  <a class="btn btn-sm" href="{% url 'painel:pedidos_historico' %}">Histórico e busca</a>
+{% endblock %}
+{% block content %}
+  <p class="muted small">Clique no primeiro botão do cartão para avançar o pedido. Pedidos novos tocam um aviso sonoro (clique em qualquer lugar da página uma vez para liberar o som). Ao marcar <strong>Saiu para entrega</strong> ou <strong>Pronto p/ retirada</strong>, o cliente é avisado no WhatsApp quando a Evolution API estiver configurada.</p>
+  <div data-quadro-url="{% url 'painel:pedidos_quadro_parcial' %}">
+    {% include "painel/pedidos/_quadro.html" %}
+  </div>
+{% endblock %}

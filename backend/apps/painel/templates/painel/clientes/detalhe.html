@@ -1,0 +1,73 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}{{ nome|default:"Cliente" }}{% endblock %}
+{% block heading %}{{ nome|default:"Cliente" }}{% endblock %}
+{% block actions %}
+  <a class="btn btn-sm" href="{{ telefone|whatsapp_link }}" target="_blank" rel="noopener">Abrir WhatsApp</a>
+  <a class="btn btn-sm btn-ghost" href="{% url 'painel:clientes' %}">Voltar</a>
+{% endblock %}
+{% block content %}
+  <section class="kpis">
+    <div class="kpi"><div class="kpi-label">Pedidos</div><div class="kpi-value">{{ qtd|default:0 }}</div><div class="kpi-note">sem contar cancelados</div></div>
+    <div class="kpi is-gold"><div class="kpi-label">Valor registrado</div><div class="kpi-value">{{ total|brl }}</div></div>
+    <div class="kpi"><div class="kpi-label">Ticket médio</div><div class="kpi-value">{{ ticket|brl }}</div></div>
+    <div class="kpi"><div class="kpi-label">WhatsApp</div><div class="kpi-value" style="font-size:1.1rem">{{ telefone|telefone }}</div></div>
+  </section>
+
+  <div class="detail-grid">
+    <section class="panel">
+      <div class="panel-head"><h2>Pedidos</h2></div>
+      {% if pedidos %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Pedido</th><th>Data</th><th class="hide-mobile">Modalidade</th><th>Status</th><th class="right">Total</th></tr></thead>
+            <tbody>
+              {% for p in pedidos %}
+                <tr>
+                  <td><a class="row-link" href="{% url 'painel:pedido' p.pk %}">#{{ p.readable_code }}</a></td>
+                  <td class="nowrap num">{{ p.created_at|date:"d/m/Y H:i" }}</td>
+                  <td class="hide-mobile">{{ p.get_fulfillment_mode_display }}</td>
+                  <td><span class="badge tone-{{ p.status|status_tone }}">{{ p.status|status_short }}</span></td>
+                  <td class="right num">{{ p.total_amount|brl }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty"><strong>Sem pedidos ainda</strong>Este cliente se cadastrou, mas ainda não pediu pelo site.</div>
+      {% endif %}
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head"><h2>Clube VIP</h2></div>
+        <div class="panel-body">
+          {% if perfil %}
+            <dl class="dl">
+              <dt>Cadastro</dt><dd>{{ perfil.created_at|date:"d/m/Y" }}</dd>
+              <dt>Status</dt><dd>{% if perfil.is_vip %}<span class="tag tag-gold">VIP</span>{% else %}Cadastrado{% endif %}</dd>
+              {% if perfil.default_address_neighborhood %}<dt>Bairro</dt><dd>{{ perfil.default_address_neighborhood }}</dd>{% endif %}
+            </dl>
+            <form method="post" action="{% url 'painel:cliente_vip' perfil.pk %}" style="margin-top:12px">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-block {% if not perfil.is_vip %}btn-primary{% endif %}">{% if perfil.is_vip %}Remover VIP{% else %}Marcar como VIP{% endif %}</button>
+            </form>
+          {% else %}
+            <p class="muted small">Não tem cadastro no Clube VIP. Pode se cadastrar pelo site com este WhatsApp.</p>
+          {% endif %}
+        </div>
+      </section>
+
+      {% if ultimo_endereco %}
+        <section class="panel">
+          <div class="panel-head"><h2>Último endereço de entrega</h2></div>
+          <div class="panel-body">
+            <p>{{ ultimo_endereco.delivery_street|default:"—" }}, {{ ultimo_endereco.delivery_number|default:"s/n" }}{% if ultimo_endereco.delivery_complement %} · {{ ultimo_endereco.delivery_complement }}{% endif %}</p>
+            <p class="muted small">{{ ultimo_endereco.delivery_neighborhood }} · {{ ultimo_endereco.delivery_city }}{% if ultimo_endereco.delivery_reference %} · Ref.: {{ ultimo_endereco.delivery_reference }}{% endif %}</p>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

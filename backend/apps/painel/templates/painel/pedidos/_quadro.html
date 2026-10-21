@@ -1,0 +1,19 @@
+{% url 'painel:pedidos' as voltar_para %}
+<div class="board-meta" data-qtd-novos="{{ qtd_novos }}">
+  <span>Hoje: <strong class="num">{{ concluidos_hoje }}</strong> concluído{{ concluidos_hoje|pluralize }} · <strong class="num">{{ cancelados_hoje }}</strong> cancelado{{ cancelados_hoje|pluralize }}</span>
+  <span>Atualizado às {{ atualizado_em|time:"H:i:s" }} · atualiza sozinho a cada 15 s</span>
+</div>
+<div class="board">
+  {% for coluna in colunas %}
+    <section class="column" style="--tone: var(--t-{% if coluna.chave == 'novos' %}novo{% elif coluna.chave == 'preparo' %}preparo{% else %}rota{% endif %})" aria-label="{{ coluna.titulo }}">
+      <header class="column-head">{{ coluna.titulo }}<span class="column-count">{{ coluna.pedidos|length }}</span></header>
+      <div class="column-body">
+        {% for p in coluna.pedidos %}
+          {% include "painel/pedidos/_card.html" with voltar_para=voltar_para %}
+        {% empty %}
+          <p class="column-empty">Nenhum pedido aqui.</p>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+</div>

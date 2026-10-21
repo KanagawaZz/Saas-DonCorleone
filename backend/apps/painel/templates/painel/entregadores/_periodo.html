@@ -1,0 +1,8 @@
+<nav class="segmented" aria-label="Período">
+  {% for key, label in periodos %}
+    <a href="?periodo={{ key }}" {% if key == periodo %}aria-current="true"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</nav>
+<form method="get" class="day-picker" aria-label="Escolher um dia">
+  <input type="date" name="dia" value="{{ dia }}" aria-label="Dia" onchange="this.form.submit()">
+</form>

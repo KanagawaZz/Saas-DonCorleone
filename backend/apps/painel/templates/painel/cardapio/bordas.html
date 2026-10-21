@@ -1,0 +1,32 @@
+{% extends "painel/base.html" %}
+{% block title %}Bordas{% endblock %}
+{% block heading %}Cardápio · Bordas{% endblock %}
+{% block actions %}{% include "painel/cardapio/_abas.html" with aba="bordas" %}{% endblock %}
+{% block content %}
+  <form method="post" class="panel">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <div class="panel-head">
+      <h2>Bordas recheadas</h2>
+      <span class="muted small">A última linha em branco serve para cadastrar uma borda nova. Preço 0 aparece como "Grátis".</span>
+    </div>
+    {% if formset.non_form_errors %}<div class="panel-body"><div class="alert alert-error">{{ formset.non_form_errors|join:" " }}</div></div>{% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Borda</th><th>Preço (R$)</th><th>Texto exibido</th><th>Ordem</th><th>Disponível</th></tr></thead>
+        <tbody>
+          {% for f in formset %}
+            <tr {% if f.instance.pk and not f.instance.is_active %}class="is-off"{% endif %}>
+              <td class="input-cell">{{ f.id }}{{ f.name }}{{ f.name.errors }}</td>
+              <td class="input-cell">{{ f.price }}{{ f.price.errors }}</td>
+              <td class="input-cell">{{ f.price_text }}{{ f.price_text.errors }}</td>
+              <td class="input-cell" style="max-width:90px">{{ f.display_order }}</td>
+              <td>{{ f.is_active }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="sticky-actions"><button type="submit" class="btn btn-primary">Salvar bordas</button></div>
+  </form>
+{% endblock %}

@@ -1,0 +1,17 @@
+# Servidor web do VPS: compila o site (Vite) e o coloca dentro do Caddy junto com a configuração.
+FROM node:22-alpine AS build
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY index.html vite.config.js ./
+COPY public/ public/
+COPY src/ src/
+# Endereço da API gravado no site durante a compilação
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+RUN npm run build
+
+FROM caddy:2-alpine
+COPY backend/deploy/Caddyfile /etc/caddy/Caddyfile
+COPY backend/deploy/indisponivel.html /srv/errors/indisponivel.html
+COPY --from=build /app/dist /srv/site

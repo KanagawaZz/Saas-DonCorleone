@@ -1,0 +1,30 @@
+{% extends "painel/base.html" %}
+{% block title %}Categorias{% endblock %}
+{% block heading %}Cardápio · Categorias{% endblock %}
+{% block actions %}{% include "painel/cardapio/_abas.html" with aba="categorias" %}{% endblock %}
+{% block content %}
+  <form method="post" class="panel">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <div class="panel-head">
+      <h2>Categorias do cardápio</h2>
+      <span class="muted small">A ordem define a sequência no site. Categoria oculta some do site com todos os produtos dela.</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Descrição</th><th>Ordem</th><th>Visível no site</th></tr></thead>
+        <tbody>
+          {% for f in formset %}
+            <tr {% if not f.instance.is_active %}class="is-off"{% endif %}>
+              <td class="input-cell">{{ f.id }}{{ f.name }}{{ f.name.errors }}</td>
+              <td class="input-cell">{{ f.description }}</td>
+              <td class="input-cell" style="max-width:90px">{{ f.display_order }}</td>
+              <td>{% if f.instance.slug == 'compre-junto' %}<span class="muted small">só no carrinho</span><span hidden>{{ f.is_active }}</span>{% else %}{{ f.is_active }}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="sticky-actions"><button type="submit" class="btn btn-primary">Salvar categorias</button></div>
+  </form>
+{% endblock %}

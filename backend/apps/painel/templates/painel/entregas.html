@@ -1,0 +1,49 @@
+{% extends "painel/base.html" %}
+{% block title %}Entregas{% endblock %}
+{% block heading %}Bairros e taxas de entrega{% endblock %}
+{% block content %}
+  <form class="panel panel-body filters" method="get" role="search">
+    <div class="field" style="flex:1 1 260px">
+      <label for="f-busca">Buscar bairro</label>
+      <input type="search" id="f-busca" name="busca" value="{{ busca }}" placeholder="Ex.: Cidade Alta">
+    </div>
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary">Buscar</button>
+      {% if busca %}<a class="btn btn-ghost" href="{% url 'painel:entregas' %}">Limpar</a>{% endif %}
+    </div>
+  </form>
+
+  <div class="callout">
+    Bairro <strong>não atendido</strong> some da lista do site. Se o cliente digitar um bairro que não está aqui, o pedido chega com taxa R$ 0,00 e o aviso <em>"taxa de entrega a confirmar"</em>, para a atendente combinar no WhatsApp.
+  </div>
+
+  <form method="post" class="panel">
+    {% csrf_token %}
+    {{ formset.management_form }}
+    <div class="panel-head">
+      <h2>{{ qtd_ativos }} bairro{{ qtd_ativos|pluralize }} atendido{{ qtd_ativos|pluralize }}</h2>
+      <span class="muted small">Use a última linha em branco para cadastrar um bairro novo.</span>
+    </div>
+    {% if formset.non_form_errors %}<div class="panel-body"><div class="alert alert-error">{{ formset.non_form_errors|join:" " }}</div></div>{% endif %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Bairro</th><th>Cidade</th><th>Taxa (R$)</th><th>Tempo (min)</th><th>Atendido</th><th>Excluir</th></tr></thead>
+        <tbody>
+          {% for f in formset %}
+            <tr {% if f.instance.pk and not f.instance.is_active %}class="is-off"{% endif %}>
+              <td class="input-cell">{{ f.id }}{{ f.neighborhood }}{{ f.neighborhood.errors }}{{ f.non_field_errors }}</td>
+              <td class="input-cell">{{ f.city }}{{ f.city.errors }}</td>
+              <td class="input-cell" style="max-width:120px">{{ f.fee }}{{ f.fee.errors }}</td>
+              <td class="input-cell" style="max-width:110px">{{ f.estimated_minutes }}{{ f.estimated_minutes.errors }}</td>
+              <td>{{ f.is_active }}</td>
+              <td>{% if f.instance.pk %}{{ f.DELETE }}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="sticky-actions">
+      <button type="submit" class="btn btn-primary" data-confirm="Salvar as alterações? Bairros marcados em Excluir serão removidos.">Salvar bairros</button>
+    </div>
+  </form>
+{% endblock %}

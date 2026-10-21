@@ -1,0 +1,10 @@
+{% if usa_entregadores %}
+  {% if entregadores_hoje %}
+    <select name="entregador" required aria-label="Entregador que vai levar">
+      <option value="">Quem vai levar?</option>
+      {% for e in entregadores_hoje %}<option value="{{ e.pk }}">{{ e.name }}</option>{% endfor %}
+    </select>
+  {% else %}
+    <a class="small no-courier" href="{% url 'painel:entregadores' %}">Nenhum entregador trabalhando hoje: marque em Entregadores</a>
+  {% endif %}
+{% endif %}

@@ -89,7 +89,7 @@ export const siteConfig = {
       chave: "65993605364",
       tipo: "Celular / WhatsApp",
       titular: "Don Corleone Pizzaria & Esfiharia",
-      avisoInstrucao: "Seu pedido entra em preparo assim que enviarmos a confirmação do comprovante. Envie o comprovante no WhatsApp."
+      avisoInstrucao: "Faça o Pix com o valor total. Assim que conferirmos o pagamento, seu pedido é confirmado e entra em preparo."
     },
     bandeirasCartao: ["Visa", "Mastercard", "American Express", "Elo"],
     tempoMedioEspera: "40 min",
@@ -172,11 +172,11 @@ export const siteConfig = {
   // Regras Comerciais e Entrega
   regrasComerciais: {
     pedidoMinimo: 23.00,
-    taxaEntregaTexto: "Calculada por bairro (ou a confirmar com a atendente)",
+    taxaEntregaTexto: "Calculada por bairro (ou confirmada pela pizzaria)",
     cidadePadrao: "Cuiabá",
     estadoPadrao: "MT",
     formasPagamento: [
-      { id: "pix", nome: "Pix", descricao: "Chave 65993605364 com cópia rápida e envio de comprovante" },
+      { id: "pix", nome: "Pix", descricao: "Chave 65993605364 com cópia rápida; a pizzaria confere o pagamento e confirma" },
       { id: "dinheiro", nome: "Dinheiro", descricao: "Pagamento na entrega ou retirada (com troco disponível)" },
       { id: "cartao_credito", nome: "Cartão de Crédito", descricao: "Maquininha na entrega/retirada (Visa, Mastercard, Amex, Elo)" },
       { id: "cartao_debito", nome: "Cartão de Débito", descricao: "Maquininha na entrega/retirada" }
@@ -225,11 +225,11 @@ export const siteConfig = {
         },
         {
           numero: "03",
-          titulo: "Envie pelo WhatsApp",
-          descricao: "Revise o resumo completo e envie o pedido diretamente para a nossa atendente confirmar."
+          titulo: "Envie e acompanhe",
+          descricao: "Revise o resumo e envie. A pizzaria confirma seu pedido e você acompanha cada etapa aqui no site, até a entrega."
         }
       ],
-      nota: "O pedido será encaminhado pelo WhatsApp e a confirmação final depende do atendimento da pizzaria."
+      nota: "Dúvidas? Fale com a gente no WhatsApp. Avisamos por lá quando seu pedido sair para entrega."
     },
     sobre: {
       titulo: "Tradição e Sabor para os seus Momentos.",

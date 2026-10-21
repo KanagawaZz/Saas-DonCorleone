@@ -1,0 +1,39 @@
+{% extends "painel/base.html" %}
+{% block title %}{% if promocao %}{{ promocao.title }}{% else %}Nova promoção{% endif %}{% endblock %}
+{% block heading %}{% if promocao %}{{ promocao.title }}{% else %}Nova promoção{% endif %}{% endblock %}
+{% block actions %}
+  <a class="btn btn-sm btn-ghost" href="{% url 'painel:promocoes' %}">Voltar</a>
+{% endblock %}
+{% block content %}
+  <form method="post" class="panel" novalidate>
+    {% csrf_token %}
+    <div class="panel-body grid">
+      {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      <div class="form-grid">
+        {% include "painel/_campo.html" with field=form.title %}
+        {% include "painel/_campo.html" with field=form.coupon_code %}
+        {% include "painel/_campo.html" with field=form.discount_type %}
+        {% include "painel/_campo.html" with field=form.discount_value %}
+        {% include "painel/_campo.html" with field=form.min_order_value %}
+        {% include "painel/_campo.html" with field=form.max_uses %}
+        {% include "painel/_campo.html" with field=form.start_date %}
+        {% include "painel/_campo.html" with field=form.end_date %}
+        <div class="field span-2 weekday-checks">
+          <span class="field-label">{{ form.weekdays_allowed.label }}</span>
+          {{ form.weekdays_allowed }}
+          <span class="help">{{ form.weekdays_allowed.help_text }}</span>
+          {{ form.weekdays_allowed.errors }}
+        </div>
+        {% include "painel/_campo.html" with field=form.registered_customers_only classe="span-2" %}
+        {% include "painel/_campo.html" with field=form.description classe="span-2" %}
+        {% include "painel/_campo.html" with field=form.is_active %}
+        {% include "painel/_campo.html" with field=form.show_top_banner %}
+        {% include "painel/_campo.html" with field=form.banner_text classe="span-2" %}
+      </div>
+    </div>
+    <div class="sticky-actions">
+      <a class="btn btn-ghost" href="{% url 'painel:promocoes' %}">Cancelar</a>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+  </form>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "painel/base.html" %}
+{% block title %}Configurações{% endblock %}
+{% block heading %}Configurações da loja{% endblock %}
+{% block content %}
+  <form method="post" class="grid" novalidate>
+    {% csrf_token %}
+    {% if form.errors or formset.total_error_count %}
+      <div class="alert alert-error">Confira os campos destacados abaixo.</div>
+    {% endif %}
+
+    <section class="panel">
+      <div class="panel-head"><h2>Fechamento emergencial</h2></div>
+      <div class="panel-body form-grid">
+        {% include "painel/_campo.html" with field=form.emergency_closed classe="span-2" %}
+        {% include "painel/_campo.html" with field=form.emergency_closed_reason classe="span-2" %}
+        <p class="muted small span-2">Enquanto estiver ligado, o site mostra a loja fechada hoje e o servidor recusa pedidos novos.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Horário de funcionamento</h2><span class="muted small">Pedidos pelo site só são aceitos entre a abertura e o fechamento.</span></div>
+      {{ formset.management_form }}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dia</th><th>Abre</th><th>Fecha</th><th>Corte da cozinha</th><th>Abre neste dia</th></tr></thead>
+          <tbody>
+            {% for f in formset %}
+              <tr {% if not f.instance.is_active %}class="is-off"{% endif %}>
+                <td><strong>{{ f.instance.name }}</strong>{{ f.id }}</td>
+                <td class="input-cell">{{ f.opening_time }}{{ f.opening_time.errors }}</td>
+                <td class="input-cell">{{ f.closing_time }}{{ f.closing_time.errors }}</td>
+                <td class="input-cell">{{ f.cutoff_time }}{{ f.cutoff_time.errors }}</td>
+                <td>{{ f.is_active }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>Pedidos e tempos</h2></div>
+      <div class="panel-body form-grid">
+        {% include "painel/_campo.html" with field=form.minimum_order %}
+        <span></span>
+        {% include "painel/_campo.html" with field=form.delivery_time_text %}
+        {% include "painel/_campo.html" with field=form.pickup_time_text %}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>PIX</h2><span class="muted small">Mostrado ao cliente depois que ele envia o pedido.</span></div>
+      <div class="panel-body form-grid">
+        {% include "painel/_campo.html" with field=form.pix_key %}
+        {% include "painel/_campo.html" with field=form.pix_type %}
+        {% include "painel/_campo.html" with field=form.pix_holder classe="span-2" %}
+        {% include "painel/_campo.html" with field=form.pix_instructions classe="span-2" %}
+      </div>
+      <div class="sticky-actions"><button type="submit" class="btn btn-primary">Salvar configurações</button></div>
+    </section>
+  </form>
+{% endblock %}

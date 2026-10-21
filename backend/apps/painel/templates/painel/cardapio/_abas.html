@@ -1,0 +1,5 @@
+<nav class="segmented" aria-label="Seções do cardápio">
+  <a href="{% url 'painel:cardapio' %}" {% if aba == 'produtos' %}aria-current="true"{% endif %}>Produtos</a>
+  <a href="{% url 'painel:bordas' %}" {% if aba == 'bordas' %}aria-current="true"{% endif %}>Bordas</a>
+  <a href="{% url 'painel:categorias' %}" {% if aba == 'categorias' %}aria-current="true"{% endif %}>Categorias</a>
+</nav>

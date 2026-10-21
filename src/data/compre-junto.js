@@ -1,78 +1,15 @@
 /**
  * Sugestões Rápidas de "Compre Junto" no Carrinho - Don Corleone
- * 
+ *
  * Focado em aumento de ticket médio e comodidade para o cliente:
  * - Bebidas geladas para acompanhar as pizzas e esfihas
  * - Sobremesas artesanais (Pizzas Broto doces e Esfihas doces)
- * 
+ *
  * Todos os valores são reais e adicionados com 1 clique ao carrinho.
+ * Os dados ficam em compre-junto.json, que também é importado pelo backend
+ * (import_legacy_data) para que o servidor conheça estes preços.
  */
 
-export const ITENS_COMPRE_JUNTO = [
-  {
-    id: 'bebida-guarana-1-5l',
-    tipo: 'simples',
-    categoria: 'bebida',
-    categoriaLabel: 'Bebida Gelada',
-    nome: 'Guaraná Antarctica 1,5L',
-    subtitulo: 'Garrafa 1,5L bem gelada',
-    preco: 14.00,
-    foto: '/images/cardapio/refrigerante-1-5l.webp',
-    icone: 'bebida'
-  },
-  {
-    id: 'bebida-coca-cola-2l',
-    tipo: 'simples',
-    categoria: 'bebida',
-    categoriaLabel: 'Bebida Gelada',
-    nome: 'Coca-Cola 2 Litros',
-    subtitulo: 'Garrafa 2L bem gelada',
-    preco: 16.00,
-    foto: '/images/cardapio/refrigerante-1-5l.webp',
-    icone: 'bebida'
-  },
-  {
-    id: 'bebida-refrigerante-lata',
-    tipo: 'simples',
-    categoria: 'bebida',
-    categoriaLabel: 'Bebida Gelada',
-    nome: 'Refrigerante em Lata 350ml',
-    subtitulo: 'Lata 350ml gelada',
-    preco: 7.00,
-    foto: '/images/cardapio/refrigerante-lata.webp',
-    icone: 'bebida'
-  },
-  {
-    id: 'pizza-doce-broto-brigadeiro',
-    tipo: 'simples',
-    categoria: 'doce',
-    categoriaLabel: 'Sobremesa',
-    nome: 'Broto Brigadeiro',
-    subtitulo: 'Chocolate nobre e granulado',
-    preco: 38.00,
-    foto: '/images/cardapio/brigadeiro.webp',
-    icone: 'doce'
-  },
-  {
-    id: 'pizza-doce-broto-romeu-julieta',
-    tipo: 'simples',
-    categoria: 'doce',
-    categoriaLabel: 'Sobremesa',
-    nome: 'Broto Romeu e Julieta',
-    subtitulo: 'Goiabada cremosa com queijo',
-    preco: 38.00,
-    foto: '/images/cardapio/romeu-e-julieta.webp',
-    icone: 'doce'
-  },
-  {
-    id: 'esfiha-doce-brigadeiro',
-    tipo: 'simples',
-    categoria: 'doce',
-    categoriaLabel: 'Sobremesa',
-    nome: 'Esfiha Doce Brigadeiro',
-    subtitulo: 'Massa artesanal recheada',
-    preco: 7.50,
-    foto: '/images/cardapio/esfiha-brigadeiro.webp',
-    icone: 'doce'
-  }
-];
+import itensCompreJunto from './compre-junto.json';
+
+export const ITENS_COMPRE_JUNTO = itensCompreJunto;

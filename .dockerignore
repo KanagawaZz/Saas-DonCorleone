@@ -1,0 +1,16 @@
+# Só o backend e src/data entram na imagem do servidor
+.git
+.venv
+node_modules
+dist
+.env
+.env.*
+!.env.example
+!.env.production.example
+**/__pycache__
+**/*.pyc
+backend/db.sqlite3
+backend/media
+backend/staticfiles
+docs
+.agents

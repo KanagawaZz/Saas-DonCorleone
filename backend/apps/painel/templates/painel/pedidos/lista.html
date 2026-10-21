@@ -1,0 +1,77 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}Histórico de pedidos{% endblock %}
+{% block heading %}Histórico de pedidos{% endblock %}
+{% block actions %}
+  <a class="btn btn-sm" href="{% url 'painel:pedidos' %}">Quadro em andamento</a>
+{% endblock %}
+{% block content %}
+  <form class="panel panel-body filters" method="get" role="search">
+    <div class="field" style="flex:2 1 220px">
+      <label for="f-busca">Buscar</label>
+      <input type="search" id="f-busca" name="busca" value="{{ filtros.busca }}" placeholder="Código, nome ou WhatsApp">
+    </div>
+    <div class="field" style="flex:1 1 150px">
+      <label for="f-status">Status</label>
+      <select id="f-status" name="status">
+        <option value="">Todos</option>
+        {% for value, label in status_opcoes %}<option value="{{ value }}" {% if value == filtros.status %}selected{% endif %}>{{ value|status_short }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field" style="flex:1 1 130px">
+      <label for="f-mod">Modalidade</label>
+      <select id="f-mod" name="modalidade">
+        <option value="">Todas</option>
+        {% for value, label in modalidade_opcoes %}<option value="{{ value }}" {% if value == filtros.modalidade %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="field" style="flex:1 1 140px">
+      <label for="f-de">De</label>
+      <input type="date" id="f-de" name="de" value="{{ filtros.de }}">
+    </div>
+    <div class="field" style="flex:1 1 140px">
+      <label for="f-ate">Até</label>
+      <input type="date" id="f-ate" name="ate" value="{{ filtros.ate }}">
+    </div>
+    <div class="btn-row">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <a class="btn btn-ghost" href="{% url 'painel:pedidos_historico' %}">Limpar</a>
+    </div>
+  </form>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>{{ qtd_filtrado }} pedido{{ qtd_filtrado|pluralize }}</h2>
+      <span class="muted small">Valor registrado (sem cancelados): <strong class="num" style="color:var(--text)">{{ total_filtrado|brl }}</strong></span>
+    </div>
+    {% if pagina.object_list %}
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pedido</th><th>Data</th><th>Cliente</th><th class="hide-mobile">WhatsApp</th><th class="hide-mobile">Modalidade</th><th>Status</th><th class="right">Total</th></tr></thead>
+          <tbody>
+            {% for p in pagina %}
+              <tr>
+                <td><a class="row-link" href="{% url 'painel:pedido' p.pk %}">#{{ p.readable_code }}</a></td>
+                <td class="nowrap num">{{ p.created_at|date:"d/m/Y H:i" }}</td>
+                <td>{{ p.customer_name }}</td>
+                <td class="hide-mobile nowrap">{% if p.customer_phone %}<a href="{% url 'painel:cliente' p.customer_phone %}">{{ p.customer_phone|telefone }}</a>{% endif %}</td>
+                <td class="hide-mobile">{{ p.get_fulfillment_mode_display }}</td>
+                <td><span class="badge tone-{{ p.status|status_tone }}">{{ p.status|status_short }}</span></td>
+                <td class="right num">{{ p.total_amount|brl }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if pagina.paginator.num_pages > 1 %}
+        <nav class="pagination" aria-label="Páginas">
+          {% if pagina.has_previous %}<a class="btn btn-sm" href="{% query_com pagina=pagina.previous_page_number %}">Anterior</a>{% endif %}
+          <span class="muted">Página {{ pagina.number }} de {{ pagina.paginator.num_pages }}</span>
+          {% if pagina.has_next %}<a class="btn btn-sm" href="{% query_com pagina=pagina.next_page_number %}">Próxima</a>{% endif %}
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="empty"><strong>Nenhum pedido encontrado</strong>Ajuste os filtros ou limpe a busca.</div>
+    {% endif %}
+  </section>
+{% endblock %}

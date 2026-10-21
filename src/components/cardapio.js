@@ -358,7 +358,7 @@ export function renderCardapio(config, dadosCardapio = dadosCardapioPadrao) {
       <!-- Banner de Fechamento do Cardápio -->
       <div class="cardapio-footer-banner text-center mt-12">
         <div class="banner-inner">
-          <p class="banner-text">Deseja revisar seus itens ou enviar o pedido para o WhatsApp?</p>
+          <p class="banner-text">Pronto para revisar seus itens e enviar o pedido?</p>
           <button type="button" class="btn btn--outline btn--gold btn--abrir-checkout">
             <span>Ver Meu Pedido no Carrinho</span>
           </button>

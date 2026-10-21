@@ -1,0 +1,457 @@
+/* ==========================================================================
+   ESTILOS DO MODAL DE RASTREIO DE PEDIDOS (ESTILO MERCADO LIVRE / IFOOD)
+   Don Corleone — Cantina & Pizzaria
+   ========================================================================== */
+
+.rastreio-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(12, 10, 9, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+  padding: 16px;
+}
+
+.rastreio-overlay.is-open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.rastreio-container {
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  background: #141210;
+  border: 1px solid rgba(184, 134, 11, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px rgba(184, 134, 11, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #F5EBE1;
+  font-family: var(--font-body, 'Manrope', sans-serif);
+}
+
+.rastreio-header {
+  padding: 18px 20px;
+  background: linear-gradient(180deg, #1C1916 0%, #141210 100%);
+  border-bottom: 1px solid rgba(184, 134, 11, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rastreio-header-title h3 {
+  font-family: var(--font-display, 'Cinzel', serif);
+  font-size: 1.15rem;
+  color: #C8A15A;
+  margin: 0;
+}
+
+.rastreio-header-title p {
+  font-size: 0.85rem;
+  color: #A89F91;
+  margin: 2px 0 0;
+}
+
+.rastreio-close-btn {
+  background: transparent;
+  border: none;
+  color: #A89F91;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.rastreio-close-btn:hover {
+  color: #F5EBE1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rastreio-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Badge de Código e Status */
+.rastreio-status-card {
+  background: #1B1714;
+  border: 1px solid rgba(200, 161, 90, 0.25);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.rastreio-codigo-badge {
+  font-family: monospace;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #E26D2B;
+  letter-spacing: 1px;
+}
+
+.rastreio-status-atual {
+  margin-top: 8px;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #E26D2B;
+}
+
+.rastreio-status-card.is-cancelado .rastreio-status-atual {
+  color: #E5484D;
+}
+
+.rastreio-status-meta {
+  font-size: 0.8rem;
+  color: #A89F91;
+  margin-top: 4px;
+}
+
+/* Previsão em destaque, como a data de entrega do Mercado Livre */
+.rastreio-previsao {
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(82, 183, 136, 0.12);
+  color: #52B788;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.rastreio-cancelado {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(229, 72, 77, 0.12);
+  color: #F2A7A9;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.rastreio-cancelado strong {
+  color: #E5484D;
+}
+
+.rastreio-cancelado p {
+  margin: 4px 0 0;
+}
+
+.rastreio-aviso {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: #C8BCAC;
+}
+
+/* Linha do tempo vertical estilo Mercado Livre */
+.rastreio-timeline {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding-left: 10px;
+  margin: 0;
+  list-style: none;
+}
+
+.rastreio-timeline.is-cancelado {
+  opacity: 0.55;
+}
+
+.timeline-step {
+  display: flex;
+  align-items: flex-start;
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.timeline-step:last-child {
+  padding-bottom: 0;
+}
+
+.timeline-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 18px;
+  top: 36px;
+  bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: background 0.3s;
+}
+
+.timeline-step.completed:not(:last-child)::after {
+  background: #52B788;
+}
+
+.timeline-step.current:not(:last-child)::after {
+  background: linear-gradient(180deg, #E26D2B 0%, rgba(255, 255, 255, 0.12) 100%);
+}
+
+.timeline-icon-wrap {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #221D1A;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  z-index: 2;
+  flex-shrink: 0;
+  margin-right: 14px;
+}
+
+.timeline-step.completed .timeline-icon-wrap {
+  background: #1B3B2B;
+  border-color: #52B788;
+  color: #52B788;
+}
+
+.timeline-step.current .timeline-icon-wrap {
+  background: #3B2314;
+  border-color: #E26D2B;
+  box-shadow: 0 0 14px rgba(226, 109, 43, 0.5);
+  animation: pulseAura 2s infinite;
+}
+
+@keyframes pulseAura {
+  0% { box-shadow: 0 0 0 0 rgba(226, 109, 43, 0.5); }
+  70% { box-shadow: 0 0 0 10px rgba(226, 109, 43, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(226, 109, 43, 0); }
+}
+
+.timeline-content {
+  flex: 1;
+}
+
+.timeline-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #A89F91;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.timeline-hora {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #A89F91;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-step.completed .timeline-title {
+  color: #52B788;
+}
+
+.timeline-step.current .timeline-title {
+  color: #E26D2B;
+  font-size: 1rem;
+}
+
+.timeline-desc {
+  font-size: 0.8rem;
+  color: #7A7265;
+  margin-top: 2px;
+}
+
+.timeline-step.current .timeline-desc {
+  color: #C8BCAC;
+}
+
+/* Detalhes do Pedido */
+.rastreio-itens-box {
+  background: #181512;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 0.85rem;
+}
+
+.rastreio-itens-box h4 {
+  font-family: var(--font-display, 'Cinzel', serif);
+  color: #C8A15A;
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+}
+
+.rastreio-item-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  color: #E0D5C7;
+}
+
+.rastreio-item-row small {
+  color: #A89F91;
+}
+
+.rastreio-total-row {
+  border-top: 1px dashed rgba(255, 255, 255, 0.15);
+  margin-top: 8px;
+  padding-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  color: #C8A15A;
+}
+
+.rastreio-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.rastreio-ajuda {
+  color: #52B788;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.rastreio-ajuda:hover {
+  text-decoration: underline;
+}
+
+.rastreio-link-outro {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #C8A15A;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rastreio-link-outro:hover {
+  text-decoration: underline;
+}
+
+.rastreio-rodape-nota,
+.rastreio-carregando {
+  margin: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  color: #7A7265;
+}
+
+.rastreio-carregando {
+  padding: 30px 0;
+  font-size: 0.9rem;
+  color: #A89F91;
+}
+
+/* Busca por código e pedidos recentes do aparelho */
+.rastreio-recentes h4 {
+  font-family: var(--font-display, 'Cinzel', serif);
+  color: #C8A15A;
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+}
+
+.rastreio-recente-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  background: #1B1714;
+  border: 1px solid rgba(200, 161, 90, 0.25);
+  border-radius: 10px;
+  color: #F5EBE1;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.rastreio-recente-item:hover {
+  border-color: #E26D2B;
+  background: #221D1A;
+}
+
+.rastreio-recente-codigo {
+  font-family: monospace;
+  font-weight: 800;
+  color: #E26D2B;
+}
+
+.rastreio-recente-info {
+  flex: 1;
+  font-size: 0.8rem;
+  color: #A89F91;
+}
+
+.rastreio-recente-seta {
+  font-size: 1.3rem;
+  color: #A89F91;
+}
+
+.rastreio-busca label {
+  display: block;
+  font-size: 0.85rem;
+  color: #C8BCAC;
+  margin-bottom: 8px;
+}
+
+.rastreio-busca-linha {
+  display: flex;
+  gap: 8px;
+}
+
+.rastreio-input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #1B1714;
+  color: #F5EBE1;
+  font-family: monospace;
+  font-size: 1rem;
+  text-transform: uppercase;
+}
+
+.rastreio-input:focus {
+  outline: none;
+  border-color: #E26D2B;
+}
+
+.rastreio-busca-erro {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: #F2A7A9;
+}
+
+.rastreio-falha {
+  text-align: center;
+  padding: 24px;
+}
+
+.rastreio-falha h4 {
+  color: #C8A15A;
+  margin: 0;
+}
+
+.rastreio-falha p {
+  color: #A89F91;
+  font-size: 0.9rem;
+  margin: 6px 0 14px;
+}

@@ -1,0 +1,43 @@
+{% load static %}<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Entrar · Painel Don Corleone</title>
+  <link rel="icon" href="{% static 'painel/brasao.svg' %}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'painel/painel.css' %}">
+</head>
+<body>
+<main class="login-wrap">
+  <form method="post" class="panel login-card">
+    {% csrf_token %}
+    <div class="brand">
+      <img src="{% static 'painel/brasao.svg' %}" alt="">
+      <span><span class="brand-name">Don Corleone</span><br><span class="brand-sub">Painel da pizzaria</span></span>
+    </div>
+
+    {% if form.errors %}
+      <div class="alert alert-error">Usuário ou senha incorretos.</div>
+    {% elif user.is_authenticated %}
+      <div class="alert alert-warning">Sua conta não tem acesso ao painel. Entre com um usuário da equipe.</div>
+    {% endif %}
+
+    <div class="field">
+      <label for="id_username">Usuário</label>
+      <input type="text" name="username" id="id_username" autocomplete="username" autofocus required value="{{ form.username.value|default:'' }}">
+    </div>
+    <div class="field">
+      <label for="id_password">Senha</label>
+      <input type="password" name="password" id="id_password" autocomplete="current-password" required>
+    </div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+    <p class="muted small" style="text-align:center">Acesso exclusivo da equipe Don Corleone.</p>
+  </form>
+</main>
+</body>
+</html>

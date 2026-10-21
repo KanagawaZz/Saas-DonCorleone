@@ -1,6 +1,6 @@
 # DonCorleone — Pizzaria & Esfiharia | Arena Cuiabá
 
-Landing page de alta conversão e web app gastronômico para a **Don Corleone — Pizzaria & Esfiharia** (Cuiabá/MT), com personalização artesanal de pizzas (até 3 sabores), carrinho integrado, verificação de funcionamento em tempo real e checkout direto para WhatsApp.
+Landing page de alta conversão e web app gastronômico para a **Don Corleone — Pizzaria & Esfiharia** (Cuiabá/MT), com personalização artesanal de pizzas (até 3 sabores), carrinho integrado, verificação de funcionamento em tempo real, pedidos enviados direto para o sistema e acompanhamento do pedido pelo site.
 
 ---
 
@@ -27,6 +27,9 @@ npm run dev        # Inicia o servidor local (http://localhost:3000)
 npm run build      # Valida e compila os arquivos de produção para dist/
 npm run preview    # Pré-visualiza o build de produção localmente
 ```
+
+### 3. Tudo de uma vez (Windows)
+Dois cliques em `iniciar.cmd` (ou `.\iniciar.ps1` no terminal) sobem o WhatsApp (Docker), o sistema (Django, porta 8000) e o site (Vite, porta 3000), cada um na sua janela. O script descobre o IP do computador para o site e o painel abrirem também no celular, na mesma rede Wi-Fi. Servidores que já estiverem rodando são mantidos.
 
 ---
 
@@ -93,6 +96,23 @@ No arquivo [`src/data/site.config.js`](file:///c:/Users/kayron.eduardo/Documents
 
 ---
 
+## 📲 WhatsApp automático (Evolution API)
+
+O WhatsApp não recebe pedidos: ele só avisa o cliente quando o pedido **sai para entrega** ou fica **pronto para retirada**. Quem envia é a [Evolution API](https://doc.evolution-api.com), rodando no Docker.
+
+1. Copie `.env.example` para `.env` na raiz e troque `EVOLUTION_API_KEY` e `EVOLUTION_DB_PASSWORD` por valores longos e aleatórios.
+2. Suba os containers (Evolution + Postgres próprio, na porta `8081`, acessível só pela própria máquina):
+   ```bash
+   docker compose up -d
+   ```
+3. Reinicie o backend Django (ele lê o mesmo `.env`).
+4. No painel, abra **WhatsApp**, confirme o nome da instância e clique em **Criar e gerar QR Code**. Escaneie com o WhatsApp da pizzaria em *Aparelhos conectados*. A tela atualiza sozinha quando conecta.
+5. Use **Enviar teste** para conferir. Se a conexão cair, volte na mesma tela e gere um novo QR Code.
+
+A conexão fica salva no volume do Docker: `docker compose down` não desconecta o WhatsApp (`docker compose down -v` apaga tudo).
+
+---
+
 ## 📦 Estrutura de Arquivos
 
 ```text
@@ -109,8 +129,7 @@ DonCorleone/
 │   │   └── depoimentos.json     # Avaliações da cantina
 │   ├── utils/
 │   │   ├── entrega.js           # Cálculo puro de taxa de entrega por modalidade/bairro
-│   │   ├── codigo-pedido.js     # Gerador de códigos curtos padronizados (DC-DDMM-XXX)
-│   │   ├── whatsapp-order.js    # Formatador de mensagem otimizada para WhatsApp
+│   │   ├── pedidos-recentes.js  # Pedidos feitos no aparelho (atalho para o acompanhamento)
 │   │   ├── horario.js           # Verificação de funcionamento e corte (fuso Cuiabá)
 │   │   ├── promocao.js          # Validação e cálculo de campanhas ativas
 │   │   ├── carrinho.js          # Store reativa do carrinho com sessionStorage

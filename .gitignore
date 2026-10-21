@@ -1,8 +1,25 @@
+# Node / Frontend
 node_modules
 dist
 .env
+.env.production
 *.log
 .DS_Store
+
+# Python & Django
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+db.sqlite3
+db.sqlite3-journal
+/media/
+/staticfiles/
+backend/media/
+backend/staticfiles/
+# Cópias do banco feitas no servidor
+/backups/
 
 # Pastas de importacao brutas temporarias
 /Combos/
@@ -12,5 +29,6 @@ dist
 /public/combos/
 /public/pizzas/
 /refrigerantes/
+
 
 

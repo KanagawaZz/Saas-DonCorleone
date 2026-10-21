@@ -1,0 +1,73 @@
+{% extends "painel/base.html" %}
+{% load painel %}
+{% block title %}{% if produto %}{{ produto.name }}{% else %}Novo produto{% endif %}{% endblock %}
+{% block heading %}{% if produto %}{{ produto.name }}{% else %}Novo produto{% endif %}{% endblock %}
+{% block actions %}
+  <a class="btn btn-sm btn-ghost" href="{% url 'painel:cardapio' %}">Voltar ao cardápio</a>
+{% endblock %}
+{% block content %}
+  <form method="post" enctype="multipart/form-data" class="panel" novalidate>
+    {% csrf_token %}
+    <div class="panel-body grid">
+      {% if form.non_field_errors %}<div class="alert alert-error">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+      <div class="form-grid">
+        {% include "painel/_campo.html" with field=form.name classe="span-2" %}
+        {% include "painel/_campo.html" with field=form.category %}
+        {% include "painel/_campo.html" with field=form.product_type %}
+        {% include "painel/_campo.html" with field=form.description classe="span-2" %}
+        {% include "painel/_campo.html" with field=form.base_price %}
+        {% include "painel/_campo.html" with field=form.price_text %}
+        {% include "painel/_campo.html" with field=form.tag %}
+        {% include "painel/_campo.html" with field=form.display_order %}
+        {% include "painel/_campo.html" with field=form.is_available %}
+        {% include "painel/_campo.html" with field=form.is_highlight %}
+      </div>
+    </div>
+
+    <div data-tamanhos>
+      <div class="panel-head" style="border-top:1px solid var(--border)">
+        <h2>Preços por tamanho (pizza)</h2>
+        <span class="muted small">Pizza meio a meio cobra o sabor mais caro do tamanho escolhido.</span>
+      </div>
+      <div class="panel-body grid">
+        {% include "painel/_campo.html" with field=form.price_category %}
+        {{ tamanhos.management_form }}
+        {% if tamanhos.non_form_errors %}<div class="alert alert-error">{{ tamanhos.non_form_errors|join:" " }}</div>{% endif %}
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Código</th><th>Nome do tamanho</th><th>Fatias</th><th>Máx. sabores</th><th>Preço (R$)</th><th>Remover</th></tr></thead>
+            <tbody>
+              {% for f in tamanhos %}
+                <tr>
+                  <td class="input-cell">{{ f.id }}{{ f.size_id }}{{ f.size_id.errors }}</td>
+                  <td class="input-cell">{{ f.size_name }}{{ f.size_name.errors }}</td>
+                  <td class="input-cell">{{ f.slices }}{{ f.slices.errors }}</td>
+                  <td class="input-cell">{{ f.max_flavors }}{{ f.max_flavors.errors }}</td>
+                  <td class="input-cell">{{ f.price }}{{ f.price.errors }}</td>
+                  <td>{% if f.instance.pk %}{{ f.DELETE }}{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="muted small">Os códigos <strong>pequena</strong>, <strong>media</strong> e <strong>grande</strong> são os que o site usa no montador de pizza.</p>
+      </div>
+    </div>
+
+    <div class="panel-head" style="border-top:1px solid var(--border)"><h2>Foto</h2></div>
+    <div class="panel-body grid">
+      {% if produto %}
+        {% with foto=produto|foto_url %}{% if foto %}<img src="{{ foto }}" alt="Foto atual" style="width:140px;height:140px;object-fit:cover;border-radius:10px" onerror="this.remove()">{% endif %}{% endwith %}
+      {% endif %}
+      <div class="form-grid">
+        {% include "painel/_campo.html" with field=form.photo_url %}
+        {% include "painel/_campo.html" with field=form.image %}
+      </div>
+    </div>
+
+    <div class="sticky-actions">
+      <a class="btn btn-ghost" href="{% url 'painel:cardapio' %}">Cancelar</a>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </div>
+  </form>
+{% endblock %}
