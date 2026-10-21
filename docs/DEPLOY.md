@@ -105,7 +105,12 @@ docker compose -f docker-compose.prod.yml --env-file .env.production ps
 docker compose -f docker-compose.prod.yml --env-file .env.production exec web \
   python manage.py shell -c "exec(open('deploy/smoke_login.py', encoding='utf-8').read())"
 ```
-O segundo comando deve terminar com `RESULTADO: OK`. Depois abra no navegador:
+O segundo comando deve terminar com `RESULTADO: OK`. Para conferir também as telas de erro (força um erro de teste, confere a tela amigável e o código de ocorrência, e apaga o teste no final):
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.production exec web \
+  python manage.py shell -c "exec(open('deploy/smoke_errors.py', encoding='utf-8').read())"
+```
+Depois abra no navegador:
 - `https://doncorleonepizzas.com.br` (site)
 - `https://sistema.doncorleonepizzas.com.br/painel/` (painel)
 

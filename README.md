@@ -28,6 +28,8 @@ npm run build      # Valida e compila os arquivos de produção para dist/
 npm run preview    # Pré-visualiza o build de produção localmente
 ```
 
+> **Instalar em outro computador** (backend, banco e site do zero): siga [docs/INSTALACAO-LOCAL.md](docs/INSTALACAO-LOCAL.md). **Colocar no ar:** [docs/DEPLOY.md](docs/DEPLOY.md).
+
 ### 3. Tudo de uma vez (Windows)
 Dois cliques em `iniciar.cmd` (ou `.\iniciar.ps1` no terminal) sobem o WhatsApp (Docker), o sistema (Django, porta 8000) e o site (Vite, porta 3000), cada um na sua janela. O script descobre o IP do computador para o site e o painel abrirem também no celular, na mesma rede Wi-Fi. Servidores que já estiverem rodando são mantidos.
 

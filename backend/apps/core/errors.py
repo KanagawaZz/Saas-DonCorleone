@@ -5,6 +5,7 @@ and the full context is kept for support (database, structured log line and a Wh
 import hashlib
 import json
 import logging
+import os
 import random
 import re
 import secrets
@@ -93,12 +94,19 @@ def request_data(request) -> dict:
 def _origin(exc) -> str:
     """Last line of our own code in the traceback (where to look first), not of Django or a library."""
     frames = traceback.extract_tb(exc.__traceback__)
-    base = str(settings.BASE_DIR)
-    ours = [f for f in frames if f.filename.startswith(base) and "site-packages" not in f.filename]
-    frame = (ours or frames or [None])[-1]
-    if not frame:
-        return ""
-    return f"{frame.filename.removeprefix(base).lstrip('/\\')}:{frame.lineno} ({frame.name})"
+    # Real paths on both sides: the same folder can be reached through a link, mapped drive or junction
+    base = os.path.realpath(settings.BASE_DIR)
+    ours = []
+    for frame in frames:
+        real = os.path.realpath(frame.filename)
+        if real.startswith(base) and "site-packages" not in real:
+            ours.append((real, frame))
+    if ours:
+        real, frame = ours[-1]
+        return f"{real.removeprefix(base).lstrip('/\\')}:{frame.lineno} ({frame.name})"
+    if frames:
+        return f"{frames[-1].filename}:{frames[-1].lineno} ({frames[-1].name})"
+    return ""
 
 
 def _client_ip(request) -> str:
