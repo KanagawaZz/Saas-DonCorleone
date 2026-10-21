@@ -71,7 +71,7 @@ curl -fsSL https://get.docker.com | sh
 ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443 && ufw --force enable
 
 # Código
-git clone https://github.com/KanagawaZz/DonCorleone.git /opt/doncorleone
+git clone https://github.com/KanagawaZz/Saas-DonCorleone.git /opt/doncorleone
 cd /opt/doncorleone
 ```
 Se o repositório for privado, o GitHub pede usuário e um **token** (GitHub → Settings → Developer settings → Personal access tokens) no lugar da senha.
